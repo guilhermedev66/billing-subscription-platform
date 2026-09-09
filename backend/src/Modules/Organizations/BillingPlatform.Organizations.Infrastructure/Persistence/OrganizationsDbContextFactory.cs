@@ -9,7 +9,8 @@ public sealed class OrganizationsDbContextFactory
     public OrganizationsDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__BillingPlatform")
-            ?? "Host=localhost;Port=5432;Database=billing_platform;Username=billing;Password=billing_dev";
+            ?? throw new InvalidOperationException(
+                "ConnectionStrings__BillingPlatform is required for EF Core tooling.");
 
         var options = new DbContextOptionsBuilder<OrganizationsDbContext>()
             .UseNpgsql(

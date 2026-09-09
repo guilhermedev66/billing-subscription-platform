@@ -18,6 +18,10 @@ dotnet build --no-restore
 dotnet test --no-build
 ```
 
+Running the API or EF Core tooling outside Compose requires
+`ConnectionStrings__BillingPlatform` from an environment variable or user
+secret; no database password is stored in tracked application settings.
+
 ## Run with Docker Compose
 
 Set a strong signing key and start PostgreSQL plus the API:
@@ -33,3 +37,6 @@ at `/health/live` and `/health/ready`; OpenAPI is available at
 
 The API deliberately refuses to start when `JWT_SIGNING_KEY` is missing or is
 shorter than 32 UTF-8 bytes.
+
+M1 sessions use the earliest organization membership as the primary tenant.
+Explicit multi-organization selection is not implemented yet.
