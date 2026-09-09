@@ -2,6 +2,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BillingPlatform.Identity.Application\BillingPlatform.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\Organizations\BillingPlatform.Organizations.Application\BillingPlatform.Organizations.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <PropertyGroup>
