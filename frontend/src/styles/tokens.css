@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+/* Manual theme toggle via [data-theme], not prefers-color-scheme, so a user choice sticks. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * Semantic surface/chrome tokens, registered inside @theme so Tailwind actually
+ * generates the utilities (bg-background, text-foreground, border-border,
+ * bg-sidebar...) -- a bare :root custom property does NOT get a utility class,
+ * it just silently produces nothing. Values are still swappable per theme
+ * because Tailwind compiles these utilities as `var(--color-x)`, so the
+ * [data-theme='dark'] override below (same variable names, later in the
+ * cascade) is picked up at runtime without touching component classes.
+ * Status colors (success/info/warning/destructive/neutral) are NOT tokenized here --
+ * StatusBadge uses the literal Tailwind utility strings from the M0 research brief
+ * (docs/research/M0-Billing-Platform-Research-Brief.md §6.2) directly.
+ */
+@theme {
+  --font-sans: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: #fafafa; /* zinc-50 */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f4f5; /* zinc-100 */
+  --color-foreground: #18181b; /* zinc-900 */
+  --color-muted-foreground: #71717a; /* zinc-500 */
+  --color-border: #e4e4e7; /* zinc-200 */
+  --color-ring: #18181b; /* zinc-900 */
+
+  --color-sidebar: #18181b; /* zinc-900 */
+  --color-sidebar-foreground: #e4e4e7; /* zinc-200 */
+  --color-sidebar-muted-foreground: #a1a1aa; /* zinc-400 */
+  --color-sidebar-border: #27272a; /* zinc-800 */
+  --color-sidebar-active: #27272a; /* zinc-800 */
+
+  /* Primary/accent color is a placeholder pending Antigravity's visual pass --
+     zinc-900 keeps it neutral and avoids the "generic AI SaaS" gradient look
+     called out as an anti-pattern in the M0 brief. */
+  --color-primary: #18181b;
+  --color-primary-foreground: #fafafa;
+
+  --color-simbar: #1e1b4b; /* indigo-950 -- deliberately distinct from sidebar, "cockpit" feel */
+  --color-simbar-foreground: #e0e7ff;
+}
+
+[data-theme='dark'] {
+  --color-background: #09090b; /* zinc-950 */
+  --color-surface: #18181b; /* zinc-900 */
+  --color-surface-muted: #27272a; /* zinc-800 */
+  --color-foreground: #f4f4f5; /* zinc-100 */
+  --color-muted-foreground: #a1a1aa; /* zinc-400 */
+  --color-border: #27272a; /* zinc-800 */
+  --color-ring: #e4e4e7; /* zinc-200 */
+
+  --color-sidebar: #0b0b0d;
+  --color-sidebar-foreground: #e4e4e7;
+  --color-sidebar-muted-foreground: #71717a;
+  --color-sidebar-border: #27272a;
+  --color-sidebar-active: #27272a;
+
+  --color-primary: #f4f4f5;
+  --color-primary-foreground: #18181b;
+
+  --color-simbar: #1e1b4b;
+  --color-simbar-foreground: #e0e7ff;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+*,
+*::before,
+*::after {
+  border-color: var(--color-border);
+}
+
+/* One focus-ring rule for the whole app -- don't re-add ring-* utilities per component. */
+*:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.tabular-nums-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
