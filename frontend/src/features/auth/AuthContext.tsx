@@ -4,6 +4,9 @@ import * as authApi from './api'
 import type { LoginValues, RegisterValues } from './schemas'
 import type { AuthSession, AuthUser } from './types'
 
+// localStorage is readable by any injected script, so this trades XSS-exfiltration
+// risk for simplicity — an httpOnly cookie would close that gap but needs backend
+// support (Set-Cookie session issuance) that's out of scope for M1.
 const STORAGE_KEY = 'billing-platform.auth'
 
 interface AuthContextValue {
