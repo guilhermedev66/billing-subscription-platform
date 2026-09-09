@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\BillingPlatform.Organizations.Application\BillingPlatform.Organizations.Application.csproj" />
+    <ProjectReference Include="..\BillingPlatform.Organizations.Domain\BillingPlatform.Organizations.Domain.csproj" />
+    <ProjectReference Include="..\..\SimulationClock\BillingPlatform.SimulationClock.Application\BillingPlatform.SimulationClock.Application.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
