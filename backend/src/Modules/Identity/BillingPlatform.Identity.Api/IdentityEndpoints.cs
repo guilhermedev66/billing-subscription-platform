@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Transactions;
 using BillingPlatform.Identity.Application;
 using BillingPlatform.Organizations.Application;
 using Microsoft.AspNetCore.Builder;
@@ -14,7 +15,9 @@ public static class IdentityEndpoints
         var group = endpoints.MapGroup("/api/auth").WithTags("Identity");
 
         group.MapPost("/register", RegisterAsync).AllowAnonymous();
-        group.MapPost("/token", CreateTokenAsync).AllowAnonymous();
+        group.MapPost("/login", LoginAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting(IdentityRateLimiting.LoginPolicy);
         group.MapGet("/me", GetCurrentUser).RequireAuthorization();
 
         return endpoints;
@@ -23,26 +26,58 @@ public static class IdentityEndpoints
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request,
         IIdentityService identityService,
+        IOrganizationService organizationService,
+        ITokenService tokenService,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.OrganizationName) ||
+            request.OrganizationName.Trim().Length > 200)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["organizationName"] = ["Organization name is required and cannot exceed 200 characters."]
+            });
+        }
+
+        using var transaction = new TransactionScope(
+            TransactionScopeOption.Required,
+            new TransactionOptions
+            {
+                IsolationLevel = IsolationLevel.ReadCommitted,
+                Timeout = TransactionManager.DefaultTimeout
+            },
+            TransactionScopeAsyncFlowOption.Enabled);
+
         var result = await identityService.RegisterAsync(
             new RegisterIdentityCommand(request.Email, request.Password),
             cancellationToken);
 
-        return result.Succeeded
-            ? Results.Created(
-                "/api/auth/me",
-                new { result.User!.Id, result.User.Email })
-            : Results.ValidationProblem(new Dictionary<string, string[]>
+        if (!result.Succeeded)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["identity"] = result.Errors.ToArray()
             });
+        }
+
+        var user = result.User!;
+        var organization = await organizationService.CreateAsync(
+            user.Id,
+            new CreateOrganizationCommand(request.OrganizationName, "USD", "INV", true),
+            cancellationToken);
+        var accessToken = tokenService.Create(user, organization.Id);
+        transaction.Complete();
+
+        return Results.Created(
+            "/api/auth/me",
+            CreateSession(accessToken.Token, user, organization));
     }
 
-    private static async Task<IResult> CreateTokenAsync(
+    private static async Task<IResult> LoginAsync(
         LoginRequest request,
         IIdentityService identityService,
         IOrganizationMembershipReader membershipReader,
+        IOrganizationService organizationService,
         ITokenService tokenService,
         CancellationToken cancellationToken)
     {
@@ -59,15 +94,27 @@ public static class IdentityEndpoints
         var organizationId = await membershipReader.FindPrimaryOrganizationIdAsync(
             user.Id,
             cancellationToken);
-        var accessToken = tokenService.Create(user, organizationId);
-
-        return Results.Ok(new
+        if (organizationId is null)
         {
-            accessToken = accessToken.Token,
-            tokenType = "Bearer",
-            expiresAt = accessToken.ExpiresAt,
-            organizationId
-        });
+            return Results.Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Organization membership required");
+        }
+
+        var organization = await organizationService.GetAsync(
+            user.Id,
+            organizationId.Value,
+            cancellationToken);
+        if (organization is null)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Organization membership required");
+        }
+
+        var accessToken = tokenService.Create(user, organization.Id);
+
+        return Results.Ok(CreateSession(accessToken.Token, user, organization));
     }
 
     private static IResult GetCurrentUser(ClaimsPrincipal principal)
@@ -79,7 +126,26 @@ public static class IdentityEndpoints
         return Results.Ok(new { userId, email, organizationId });
     }
 
-    private sealed record RegisterRequest(string Email, string Password);
+    private static AuthSessionResponse CreateSession(
+        string token,
+        IdentityUserInfo user,
+        OrganizationSummary organization) =>
+        new(
+            token,
+            new AuthUserResponse(user.Id, user.Email, organization.Id, organization.Name));
+
+    private sealed record RegisterRequest(
+        string OrganizationName,
+        string Email,
+        string Password);
 
     private sealed record LoginRequest(string Email, string Password);
+
+    private sealed record AuthSessionResponse(string Token, AuthUserResponse User);
+
+    private sealed record AuthUserResponse(
+        Guid Id,
+        string Email,
+        Guid OrganizationId,
+        string OrganizationName);
 }

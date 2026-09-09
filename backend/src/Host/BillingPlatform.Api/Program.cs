@@ -23,6 +23,7 @@ try
     builder.Services.AddProblemDetails();
     builder.Services.AddOpenApi();
     builder.Services.AddSimulationClock();
+    builder.Services.AddIdentityRateLimiting();
     builder.Services.AddIdentityModule(builder.Configuration);
     builder.Services.AddOrganizationsModule(builder.Configuration);
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
@@ -35,6 +36,7 @@ try
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseCors("Frontend");
+    app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
 
