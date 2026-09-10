@@ -4,6 +4,7 @@ import { RegisterPage } from '@/features/auth/RegisterPage'
 import { CustomersPage } from '@/pages/CustomersPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { DevelopersPage } from '@/pages/DevelopersPage'
+import { InvoiceDetailPage } from '@/pages/InvoiceDetailPage'
 import { InvoicesPage } from '@/pages/InvoicesPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PaymentsPage } from '@/pages/PaymentsPage'
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
           { path: '/subscriptions', element: <SubscriptionsPage /> },
           { path: '/subscriptions/:id', element: <SubscriptionDetailPage /> },
           { path: '/invoices', element: <InvoicesPage /> },
+          { path: '/invoices/:id', element: <InvoiceDetailPage /> },
           { path: '/payments', element: <PaymentsPage /> },
           { path: '/developers', element: <DevelopersPage /> },
           { path: '/settings', element: <SettingsPage /> },

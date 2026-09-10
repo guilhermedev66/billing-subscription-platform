@@ -358,3 +358,24 @@ export const subscriptionsHandlers = [
     return HttpResponse.json(updated)
   }),
 ]
+
+/**
+ * Cross-module mock effect for mocks/paymentsHandlers.ts: a payment attempt
+ * recovers or degrades a subscription's status the same way the real
+ * Payments module would call into Subscriptions' application layer (never
+ * touching another module's row directly — this is the mock's equivalent of
+ * that call, not a shortcut around module boundaries).
+ */
+export function setSubscriptionStatusForPayment(
+  subscriptionId: string,
+  status: WireSubscriptionStatus,
+): WireSubscription | undefined {
+  const subscription = subscriptions.get(subscriptionId)
+  if (!subscription) return undefined
+
+  const updated: WireSubscription = { ...subscription, status, version: subscription.version + 1 }
+  subscriptions.set(subscriptionId, updated)
+  return updated
+}
+
+export const SUBSCRIPTION_STATUS_WIRE = { TRIALING, ACTIVE, PAST_DUE, UNPAID, CANCELED, PAUSED }

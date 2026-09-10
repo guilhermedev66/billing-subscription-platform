@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client'
+import { idempotencyHeaders } from '@/lib/idempotency'
 import type { ChangePreviewRequest, Subscription, SubscriptionProrationReceipt, SubscriptionStatus } from './types'
 
 /**
@@ -83,22 +84,30 @@ export async function previewChange(id: string, request: ChangePreviewRequest): 
  * not persisted as a line item anywhere yet.
  */
 export async function applyChange(id: string, request: ChangePreviewRequest): Promise<SubscriptionProrationReceipt> {
-  const wireReceipt = await api.post<WireProrationReceipt>(`/subscriptions/${id}/apply-change`, request)
+  const wireReceipt = await api.post<WireProrationReceipt>(`/subscriptions/${id}/apply-change`, request, {
+    headers: idempotencyHeaders(),
+  })
   return receiptFromWire(wireReceipt)
 }
 
 export async function pauseSubscription(id: string): Promise<Subscription> {
-  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/pause`)
+  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/pause`, undefined, {
+    headers: idempotencyHeaders(),
+  })
   return subscriptionFromWire(wireSubscription)
 }
 
 export async function resumeSubscription(id: string): Promise<Subscription> {
-  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/resume`)
+  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/resume`, undefined, {
+    headers: idempotencyHeaders(),
+  })
   return subscriptionFromWire(wireSubscription)
 }
 
 /** Immediate cancellation only this milestone — the backend takes no request body. */
 export async function cancelSubscription(id: string): Promise<Subscription> {
-  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/cancel`)
+  const wireSubscription = await api.post<WireSubscription>(`/subscriptions/${id}/cancel`, undefined, {
+    headers: idempotencyHeaders(),
+  })
   return subscriptionFromWire(wireSubscription)
 }

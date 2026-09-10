@@ -2,6 +2,8 @@ import { http, HttpResponse } from 'msw'
 import type { AuthSession, AuthUser } from '@/features/auth/types'
 import { catalogHandlers } from './catalogHandlers'
 import { customersHandlers } from './customersHandlers'
+import { invoicesHandlers } from './invoicesHandlers'
+import { paymentsHandlers } from './paymentsHandlers'
 import { subscriptionsHandlers } from './subscriptionsHandlers'
 
 /**
@@ -84,4 +86,6 @@ export const handlers = [
   ...customersHandlers,
   ...catalogHandlers,
   ...subscriptionsHandlers,
+  ...invoicesHandlers,
+  ...paymentsHandlers,
 ]
