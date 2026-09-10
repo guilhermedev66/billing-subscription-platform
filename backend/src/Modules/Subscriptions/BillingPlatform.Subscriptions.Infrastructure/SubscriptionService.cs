@@ -18,7 +18,7 @@ internal sealed class SubscriptionService(
     IVirtualClock clock,
     ICustomerService customerService,
     ISubscriptionPriceReader priceReader,
-    IProrationCalculator prorationCalculator) : ISubscriptionService
+    IProrationCalculator prorationCalculator) : ISubscriptionService, ISubscriptionPaymentStateService
 {
     private const string IdempotencyConstraintName =
         "ux_idempotency_records_organization_id_operation_key";
@@ -54,7 +54,7 @@ internal sealed class SubscriptionService(
         }
 
         _ = ResolveRecurringAmount(price, command.SeatCount);
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await BeginOwnedTransactionAsync(cancellationToken);
         try
         {
             var now = clock.Now.ToUniversalTime();
@@ -93,7 +93,7 @@ internal sealed class SubscriptionService(
         }
         catch (ArgumentException)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await RollbackOwnedAsync(transaction, cancellationToken);
             throw;
         }
     }
@@ -144,7 +144,7 @@ internal sealed class SubscriptionService(
     {
         var normalizedKey = NormalizeIdempotencyKey(idempotencyKey);
         var requestHash = HashRequest(
-            $"apply-change|{subscriptionId:D}|{FormatGuid(command.NewPriceId)}|{FormatSeatCount(command.NewSeatCount)}");
+            $"apply-change|{subscriptionId:D}|{FormatGuid(command.NewPriceId)}|{FormatSeatCount(command.NewSeatCount)}|{NormalizeCardNumber(command.CardNumber)}");
         var replay = await FindReplayAsync<SubscriptionProrationReceipt>(
             organizationId,
             "apply-change",
@@ -156,13 +156,13 @@ internal sealed class SubscriptionService(
             return replay;
         }
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await BeginOwnedTransactionAsync(cancellationToken);
         try
         {
             var subscription = await GetTrackedAsync(organizationId, subscriptionId, cancellationToken);
             if (subscription is null)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                await RollbackOwnedAsync(transaction, cancellationToken);
                 return null;
             }
 
@@ -187,12 +187,12 @@ internal sealed class SubscriptionService(
         }
         catch (ArgumentException)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await RollbackOwnedAsync(transaction, cancellationToken);
             throw;
         }
         catch (SubscriptionDomainException)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await RollbackOwnedAsync(transaction, cancellationToken);
             throw;
         }
     }
@@ -221,6 +221,62 @@ internal sealed class SubscriptionService(
         TransitionAsync(organizationId, subscriptionId, "resume", idempotencyKey,
             subscription => subscription.Resume(), cancellationToken);
 
+    public Task<SubscriptionSummary?> MarkPastDueAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default) =>
+        TransitionPaymentStateAsync(
+            organizationId,
+            subscriptionId,
+            subscription => subscription.MarkPastDue(),
+            cancellationToken);
+
+    public Task<SubscriptionSummary?> MarkUnpaidAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default) =>
+        TransitionPaymentStateAsync(
+            organizationId,
+            subscriptionId,
+            subscription => subscription.MarkUnpaid(),
+            cancellationToken);
+
+    public Task<SubscriptionSummary?> RecoverAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default) =>
+        TransitionPaymentStateAsync(
+            organizationId,
+            subscriptionId,
+            subscription => subscription.Recover(),
+            cancellationToken);
+
+    private async Task<SubscriptionSummary?> TransitionPaymentStateAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        Action<Subscription> transition,
+        CancellationToken cancellationToken)
+    {
+        var subscription = await GetTrackedAsync(organizationId, subscriptionId, cancellationToken);
+        if (subscription is null)
+        {
+            return null;
+        }
+
+        transition(subscription);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            dbContext.ChangeTracker.Clear();
+            throw new SubscriptionConcurrencyException();
+        }
+
+        return ToSummary(subscription);
+    }
+
     private async Task<SubscriptionMutationResult<SubscriptionSummary>?> TransitionAsync(
         Guid organizationId,
         Guid subscriptionId,
@@ -238,13 +294,13 @@ internal sealed class SubscriptionService(
             return replay;
         }
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await BeginOwnedTransactionAsync(cancellationToken);
         try
         {
             var subscription = await GetTrackedAsync(organizationId, subscriptionId, cancellationToken);
             if (subscription is null)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                await RollbackOwnedAsync(transaction, cancellationToken);
                 return null;
             }
 
@@ -262,7 +318,7 @@ internal sealed class SubscriptionService(
         }
         catch (SubscriptionDomainException)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await RollbackOwnedAsync(transaction, cancellationToken);
             throw;
         }
     }
@@ -337,7 +393,7 @@ internal sealed class SubscriptionService(
         T value,
         int statusCode,
         string? location,
-        IDbContextTransaction transaction,
+        IDbContextTransaction? transaction,
         CancellationToken cancellationToken)
     {
         var responseBody = JsonSerializer.Serialize(value, JsonOptions);
@@ -349,7 +405,7 @@ internal sealed class SubscriptionService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            await CommitOwnedAsync(transaction, cancellationToken);
             return new SubscriptionMutationResult<T>(value, statusCode, location, false, responseBody);
         }
         catch (DbUpdateConcurrencyException)
@@ -369,10 +425,10 @@ internal sealed class SubscriptionService(
         string operation,
         string idempotencyKey,
         string requestHash,
-        IDbContextTransaction transaction,
+        IDbContextTransaction? transaction,
         CancellationToken cancellationToken)
     {
-        await transaction.RollbackAsync(cancellationToken);
+        await RollbackOwnedAsync(transaction, cancellationToken);
         dbContext.ChangeTracker.Clear();
         var record = await dbContext.IdempotencyRecords
             .AsNoTracking()
@@ -418,6 +474,27 @@ internal sealed class SubscriptionService(
 
         return normalized;
     }
+
+    private static string NormalizeCardNumber(string? cardNumber) =>
+        string.IsNullOrWhiteSpace(cardNumber)
+            ? "<null>"
+            : new string(cardNumber.Where(character => !char.IsWhiteSpace(character)).ToArray());
+
+    private async Task<IDbContextTransaction?> BeginOwnedTransactionAsync(
+        CancellationToken cancellationToken) =>
+        dbContext.Database.CurrentTransaction is null
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+
+    private static Task CommitOwnedAsync(
+        IDbContextTransaction? transaction,
+        CancellationToken cancellationToken) =>
+        transaction is null ? Task.CompletedTask : transaction.CommitAsync(cancellationToken);
+
+    private static Task RollbackOwnedAsync(
+        IDbContextTransaction? transaction,
+        CancellationToken cancellationToken) =>
+        transaction is null ? Task.CompletedTask : transaction.RollbackAsync(cancellationToken);
 
     private static string HashRequest(string normalizedRequest) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalizedRequest)));

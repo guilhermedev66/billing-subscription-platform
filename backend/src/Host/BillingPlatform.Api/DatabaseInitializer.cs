@@ -1,8 +1,10 @@
 using BillingPlatform.Catalog.Infrastructure.Persistence;
+using BillingPlatform.Billing.Infrastructure.Persistence;
 using BillingPlatform.Customers.Infrastructure.Persistence;
 using BillingPlatform.Identity.Infrastructure.Persistence;
 using BillingPlatform.Organizations.Infrastructure.Persistence;
 using BillingPlatform.Subscriptions.Infrastructure.Persistence;
+using BillingPlatform.Payments.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace BillingPlatform.Api;
@@ -31,5 +33,13 @@ internal static class DatabaseInitializer
         var subscriptionsDbContext =
             scope.ServiceProvider.GetRequiredService<SubscriptionsDbContext>();
         await subscriptionsDbContext.Database.MigrateAsync();
+
+        var billingDbContext =
+            scope.ServiceProvider.GetRequiredService<BillingDbContext>();
+        await billingDbContext.Database.MigrateAsync();
+
+        var paymentsDbContext =
+            scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
+        await paymentsDbContext.Database.MigrateAsync();
     }
 }

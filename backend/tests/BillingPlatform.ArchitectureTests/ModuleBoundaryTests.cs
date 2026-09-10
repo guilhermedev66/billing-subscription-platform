@@ -119,6 +119,65 @@ public sealed class ModuleBoundaryTests
                 "BillingPlatform.Catalog.Api",
                 "BillingPlatform.SimulationClock.Infrastructure"
             ]
+        },
+        {
+            "Billing",
+            [
+                typeof(Billing.Domain.AssemblyMarker).Assembly,
+                typeof(Billing.Application.AssemblyMarker).Assembly,
+                typeof(Billing.Infrastructure.AssemblyMarker).Assembly,
+                typeof(Billing.Api.AssemblyMarker).Assembly
+            ],
+            [
+                "BillingPlatform.Identity.Domain",
+                "BillingPlatform.Identity.Infrastructure",
+                "BillingPlatform.Identity.Api",
+                "BillingPlatform.Organizations.Domain",
+                "BillingPlatform.Organizations.Infrastructure",
+                "BillingPlatform.Organizations.Api",
+                "BillingPlatform.Customers.Domain",
+                "BillingPlatform.Customers.Infrastructure",
+                "BillingPlatform.Customers.Api",
+                "BillingPlatform.Catalog.Domain",
+                "BillingPlatform.Catalog.Infrastructure",
+                "BillingPlatform.Catalog.Api",
+                "BillingPlatform.Subscriptions.Domain",
+                "BillingPlatform.Subscriptions.Infrastructure",
+                "BillingPlatform.Subscriptions.Api",
+                "BillingPlatform.Payments.Domain",
+                "BillingPlatform.Payments.Application",
+                "BillingPlatform.Payments.Infrastructure",
+                "BillingPlatform.Payments.Api",
+                "BillingPlatform.SimulationClock.Infrastructure"
+            ]
+        },
+        {
+            "Payments",
+            [
+                typeof(Payments.Domain.AssemblyMarker).Assembly,
+                typeof(Payments.Application.AssemblyMarker).Assembly,
+                typeof(Payments.Infrastructure.AssemblyMarker).Assembly,
+                typeof(Payments.Api.AssemblyMarker).Assembly
+            ],
+            [
+                "BillingPlatform.Identity.Domain",
+                "BillingPlatform.Identity.Infrastructure",
+                "BillingPlatform.Identity.Api",
+                "BillingPlatform.Organizations.Domain",
+                "BillingPlatform.Organizations.Infrastructure",
+                "BillingPlatform.Organizations.Api",
+                "BillingPlatform.Customers.Domain",
+                "BillingPlatform.Customers.Infrastructure",
+                "BillingPlatform.Customers.Api",
+                "BillingPlatform.Catalog.Domain",
+                "BillingPlatform.Catalog.Infrastructure",
+                "BillingPlatform.Catalog.Api",
+                "BillingPlatform.Billing.Infrastructure",
+                "BillingPlatform.Billing.Api",
+                "BillingPlatform.Subscriptions.Infrastructure",
+                "BillingPlatform.Subscriptions.Api",
+                "BillingPlatform.SimulationClock.Infrastructure"
+            ]
         }
     };
 

@@ -30,6 +30,8 @@ public static class DependencyInjection
             provider.GetRequiredService<OrganizationService>());
         services.AddScoped<IOrganizationMembershipReader>(provider =>
             provider.GetRequiredService<OrganizationService>());
+        services.AddScoped<IOrganizationBillingReader>(provider =>
+            provider.GetRequiredService<OrganizationService>());
 
         return services;
     }

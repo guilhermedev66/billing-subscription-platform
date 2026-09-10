@@ -9,7 +9,7 @@ namespace BillingPlatform.Organizations.Infrastructure;
 
 internal sealed class OrganizationService(
     OrganizationsDbContext dbContext,
-    IVirtualClock clock) : IOrganizationService, IOrganizationMembershipReader
+    IVirtualClock clock) : IOrganizationService, IOrganizationMembershipReader, IOrganizationBillingReader
 {
     public async Task<OrganizationSummary> CreateAsync(
         Guid userId,
@@ -66,6 +66,18 @@ internal sealed class OrganizationService(
             .Select(membership => (Guid?)membership.OrganizationId)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<OrganizationBillingDetails?> GetBillingDetailsAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default) =>
+        await dbContext.Organizations
+            .AsNoTracking()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => new OrganizationBillingDetails(
+                organization.Id,
+                organization.InvoicePrefix,
+                organization.DefaultCurrency))
+            .SingleOrDefaultAsync(cancellationToken);
 
     private static OrganizationSummary ToSummary(Organization organization) =>
         new(

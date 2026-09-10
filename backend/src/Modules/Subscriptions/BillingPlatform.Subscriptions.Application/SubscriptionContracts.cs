@@ -8,6 +8,8 @@ public sealed class SubscriptionConcurrencyException()
 public sealed class IdempotencyConflictException()
     : Exception("The Idempotency-Key was already used with a different request.");
 
+public sealed class SubscriptionBillingConflictException(string message) : Exception(message);
+
 public sealed record SubscriptionMutationResult<T>(
     T Value,
     int StatusCode,
@@ -22,7 +24,8 @@ public sealed record CreateSubscriptionCommand(
 
 public sealed record SubscriptionChangeCommand(
     Guid? NewPriceId,
-    int? NewSeatCount)
+    int? NewSeatCount,
+    string? CardNumber = null)
 {
     public bool HasChange => NewPriceId is not null || NewSeatCount is not null;
 }
@@ -44,6 +47,39 @@ public sealed record SubscriptionSummary(
 public sealed record SubscriptionProrationReceipt(
     SubscriptionSummary Subscription,
     ProrationResult Proration);
+
+public interface ISubscriptionChangeBillingOrchestrator
+{
+    Task<SubscriptionMutationResult<SubscriptionProrationReceipt>?> ApplyAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        SubscriptionChangeCommand command,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+}
+
+public interface ISubscriptionPaymentStateService
+{
+    Task<SubscriptionSummary?> GetAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionSummary?> MarkPastDueAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionSummary?> MarkUnpaidAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionSummary?> RecoverAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        CancellationToken cancellationToken = default);
+}
 
 public sealed record SubscriptionPrice(
     Guid Id,

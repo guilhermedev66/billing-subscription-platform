@@ -23,6 +23,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Host\BillingPlatform.Api\BillingPlatform.Api.csproj" />
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Infrastructure\BillingPlatform.Subscriptions.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Infrastructure\BillingPlatform.Billing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Infrastructure\BillingPlatform.Payments.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

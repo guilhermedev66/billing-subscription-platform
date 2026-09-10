@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Application\BillingPlatform.Subscriptions.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Domain\BillingPlatform.Subscriptions.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Domain\BillingPlatform.Billing.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Domain\BillingPlatform.Payments.Domain.csproj" />
   </ItemGroup>
 
 </Project>

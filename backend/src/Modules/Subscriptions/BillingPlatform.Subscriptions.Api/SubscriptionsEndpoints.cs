@@ -136,7 +136,7 @@ public static class SubscriptionsEndpoints
         SubscriptionChangeRequest request,
         ClaimsPrincipal principal,
         HttpRequest httpRequest,
-        ISubscriptionService subscriptionService,
+        ISubscriptionChangeBillingOrchestrator billingOrchestrator,
         CancellationToken cancellationToken)
     {
         if (!TryGetOrganizationId(principal, out var organizationId))
@@ -151,10 +151,13 @@ public static class SubscriptionsEndpoints
 
         try
         {
-            var result = await subscriptionService.ApplyChangeAsync(
+            var result = await billingOrchestrator.ApplyAsync(
                 organizationId,
                 subscriptionId,
-                new SubscriptionChangeCommand(request.NewPriceId, request.NewSeatCount),
+                new SubscriptionChangeCommand(
+                    request.NewPriceId,
+                    request.NewSeatCount,
+                    request.CardNumber),
                 idempotencyKey,
                 cancellationToken);
             return result is null ? Results.NotFound() : MutationResult(result);
@@ -174,6 +177,10 @@ public static class SubscriptionsEndpoints
         catch (ArgumentException exception)
         {
             return ValidationError(exception);
+        }
+        catch (SubscriptionBillingConflictException exception)
+        {
+            return ConflictError(exception);
         }
     }
 
@@ -313,7 +320,8 @@ public static class SubscriptionsEndpoints
 
     private sealed record SubscriptionChangeRequest(
         Guid? NewPriceId = null,
-        int? NewSeatCount = null);
+        int? NewSeatCount = null,
+        string? CardNumber = null);
 
     private sealed class StoredJsonResult(
         string responseBody,

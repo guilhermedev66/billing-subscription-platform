@@ -1,6 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Modules\Identity\BillingPlatform.Identity.Api\BillingPlatform.Identity.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\BillingPlatform.Identity.Infrastructure\BillingPlatform.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Organizations\BillingPlatform.Organizations.Api\BillingPlatform.Organizations.Api.csproj" />
@@ -10,6 +17,11 @@
     <ProjectReference Include="..\..\Modules\Catalog\BillingPlatform.Catalog.Api\BillingPlatform.Catalog.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\BillingPlatform.Catalog.Infrastructure\BillingPlatform.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Subscriptions\BillingPlatform.Subscriptions.Api\BillingPlatform.Subscriptions.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Billing\BillingPlatform.Billing.Api\BillingPlatform.Billing.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Billing\BillingPlatform.Billing.Infrastructure\BillingPlatform.Billing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Payments\BillingPlatform.Payments.Api\BillingPlatform.Payments.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Payments\BillingPlatform.Payments.Infrastructure\BillingPlatform.Payments.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Payments\BillingPlatform.Payments.Application\BillingPlatform.Payments.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Subscriptions\BillingPlatform.Subscriptions.Infrastructure\BillingPlatform.Subscriptions.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
   </ItemGroup>

@@ -42,6 +42,14 @@
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Application\BillingPlatform.Subscriptions.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Domain\BillingPlatform.Subscriptions.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Infrastructure\BillingPlatform.Subscriptions.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Api\BillingPlatform.Billing.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Application\BillingPlatform.Billing.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Domain\BillingPlatform.Billing.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Infrastructure\BillingPlatform.Billing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Api\BillingPlatform.Payments.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Application\BillingPlatform.Payments.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Domain\BillingPlatform.Payments.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Infrastructure\BillingPlatform.Payments.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

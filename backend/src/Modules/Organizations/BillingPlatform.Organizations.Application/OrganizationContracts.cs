@@ -14,6 +14,11 @@ public sealed record OrganizationSummary(
     bool SimulationModeEnabled,
     DateTimeOffset CreatedAt);
 
+public sealed record OrganizationBillingDetails(
+    Guid Id,
+    string InvoicePrefix,
+    string DefaultCurrency);
+
 public interface IOrganizationService
 {
     Task<OrganizationSummary> CreateAsync(
@@ -23,6 +28,13 @@ public interface IOrganizationService
 
     Task<OrganizationSummary?> GetAsync(
         Guid userId,
+        Guid organizationId,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IOrganizationBillingReader
+{
+    Task<OrganizationBillingDetails?> GetBillingDetailsAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
 }

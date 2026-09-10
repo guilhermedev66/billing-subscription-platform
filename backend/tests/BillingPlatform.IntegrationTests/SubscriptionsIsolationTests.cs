@@ -100,7 +100,8 @@ public sealed class SubscriptionsIsolationTests(PostgreSqlFixture database)
                    JsonContent.Create(new
                    {
                        newPriceId = newPrice.Id,
-                       newSeatCount = 3
+                       newSeatCount = 3,
+                       cardNumber = "4242 4242 4242 4242"
                    }));
         apply.Headers.Add("Idempotency-Key", "initial-apply");
         using (var applyResponse = await client.SendAsync(apply))
@@ -204,6 +205,17 @@ public sealed class SubscriptionsIsolationTests(PostgreSqlFixture database)
             client, organization.Token, subscription.Id, "duplicate-apply", newPrice.Id, 4);
         Assert.Equal(HttpStatusCode.Conflict, conflictingApply.StatusCode);
         conflictingApply.Dispose();
+
+        var conflictingCardApply = await SendApplyAsync(
+            client,
+            organization.Token,
+            subscription.Id,
+            "duplicate-apply",
+            newPrice.Id,
+            3,
+            "4000 0000 0000 0002");
+        Assert.Equal(HttpStatusCode.Conflict, conflictingCardApply.StatusCode);
+        conflictingCardApply.Dispose();
 
         using var firstCancel = ApiTestClient.AuthorizedRequest(
             HttpMethod.Post,
@@ -625,7 +637,12 @@ public sealed class SubscriptionsIsolationTests(PostgreSqlFixture database)
             HttpMethod.Post,
             $"/api/subscriptions/{subscriptionId}/preview-proration",
             token,
-            JsonContent.Create(new { newPriceId, newSeatCount }));
+            JsonContent.Create(new
+            {
+                newPriceId,
+                newSeatCount,
+                cardNumber = "4242 4242 4242 4242"
+            }));
         using var response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var receipt = await response.Content.ReadFromJsonAsync<SubscriptionReceiptResponse>();
@@ -639,13 +656,19 @@ public sealed class SubscriptionsIsolationTests(PostgreSqlFixture database)
         Guid subscriptionId,
         string idempotencyKey,
         Guid newPriceId,
-        int? newSeatCount)
+        int? newSeatCount,
+        string cardNumber = "4242 4242 4242 4242")
     {
         var request = ApiTestClient.AuthorizedRequest(
             HttpMethod.Post,
             $"/api/subscriptions/{subscriptionId}/apply-change",
             token,
-            JsonContent.Create(new { newPriceId, newSeatCount }));
+            JsonContent.Create(new
+            {
+                newPriceId,
+                newSeatCount,
+                cardNumber
+            }));
         request.Headers.Add("Idempotency-Key", idempotencyKey);
         return await client.SendAsync(request);
     }

@@ -1,12 +1,17 @@
 using BillingPlatform.Api;
 using BillingPlatform.Catalog.Api;
 using BillingPlatform.Catalog.Infrastructure;
+using BillingPlatform.Billing.Api;
+using BillingPlatform.Billing.Infrastructure;
 using BillingPlatform.Customers.Api;
 using BillingPlatform.Customers.Infrastructure;
 using BillingPlatform.Identity.Api;
 using BillingPlatform.Identity.Infrastructure;
 using BillingPlatform.Organizations.Api;
 using BillingPlatform.Organizations.Infrastructure;
+using BillingPlatform.Payments.Api;
+using BillingPlatform.Payments.Application;
+using BillingPlatform.Payments.Infrastructure;
 using BillingPlatform.SimulationClock.Infrastructure;
 using BillingPlatform.Subscriptions.Api;
 using BillingPlatform.Subscriptions.Application;
@@ -36,7 +41,12 @@ try
     builder.Services.AddCustomersModule(builder.Configuration);
     builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddSubscriptionsModule(builder.Configuration);
+    builder.Services.AddBillingModule(builder.Configuration);
+    builder.Services.AddPaymentsModule(builder.Configuration);
     builder.Services.AddScoped<ISubscriptionPriceReader, CatalogSubscriptionPriceReader>();
+    builder.Services.AddScoped<ISubscriptionChangeBillingOrchestrator, SubscriptionChangeBillingOrchestrator>();
+    builder.Services.AddScoped<FinancialTransactionCoordinator>();
+    builder.Services.AddScoped<IPaymentTransactionCoordinator, PaymentTransactionCoordinator>();
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
     builder.Services.AddPlatformHealthChecks(builder.Configuration);
     builder.Services.AddFrontendCors(builder.Configuration);
@@ -63,6 +73,8 @@ try
     app.MapCustomerEndpoints();
     app.MapCatalogEndpoints();
     app.MapSubscriptionEndpoints();
+    app.MapBillingEndpoints();
+    app.MapPaymentEndpoints();
 
     await DatabaseInitializer.ApplyMigrationsAsync(app.Services);
     await app.RunAsync();
