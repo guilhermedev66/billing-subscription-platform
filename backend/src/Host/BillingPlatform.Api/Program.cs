@@ -1,4 +1,8 @@
 using BillingPlatform.Api;
+using BillingPlatform.Catalog.Api;
+using BillingPlatform.Catalog.Infrastructure;
+using BillingPlatform.Customers.Api;
+using BillingPlatform.Customers.Infrastructure;
 using BillingPlatform.Identity.Api;
 using BillingPlatform.Identity.Infrastructure;
 using BillingPlatform.Organizations.Api;
@@ -26,6 +30,8 @@ try
     builder.Services.AddIdentityRateLimiting();
     builder.Services.AddIdentityModule(builder.Configuration);
     builder.Services.AddOrganizationsModule(builder.Configuration);
+    builder.Services.AddCustomersModule(builder.Configuration);
+    builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
     builder.Services.AddPlatformHealthChecks(builder.Configuration);
     builder.Services.AddFrontendCors(builder.Configuration);
@@ -49,6 +55,8 @@ try
     app.MapPlatformHealthChecks();
     app.MapIdentityEndpoints();
     app.MapOrganizationEndpoints();
+    app.MapCustomerEndpoints();
+    app.MapCatalogEndpoints();
 
     await DatabaseInitializer.ApplyMigrationsAsync(app.Services);
     await app.RunAsync();

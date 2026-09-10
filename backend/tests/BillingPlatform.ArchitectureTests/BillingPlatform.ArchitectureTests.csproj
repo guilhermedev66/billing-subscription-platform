@@ -28,6 +28,14 @@
     <ProjectReference Include="..\..\src\Modules\Organizations\BillingPlatform.Organizations.Application\BillingPlatform.Organizations.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Organizations\BillingPlatform.Organizations.Domain\BillingPlatform.Organizations.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Organizations\BillingPlatform.Organizations.Infrastructure\BillingPlatform.Organizations.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\BillingPlatform.Customers.Api\BillingPlatform.Customers.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\BillingPlatform.Customers.Application\BillingPlatform.Customers.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\BillingPlatform.Customers.Domain\BillingPlatform.Customers.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\BillingPlatform.Customers.Infrastructure\BillingPlatform.Customers.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Api\BillingPlatform.Catalog.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Application\BillingPlatform.Catalog.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Domain\BillingPlatform.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Infrastructure\BillingPlatform.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Application\BillingPlatform.SimulationClock.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
   </ItemGroup>

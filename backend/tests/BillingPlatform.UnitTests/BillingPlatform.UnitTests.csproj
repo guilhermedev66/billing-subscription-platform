@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\Organizations\BillingPlatform.Organizations.Domain\BillingPlatform.Organizations.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\BillingPlatform.Customers.Domain\BillingPlatform.Customers.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Domain\BillingPlatform.Catalog.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Application\BillingPlatform.SimulationClock.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
   </ItemGroup>

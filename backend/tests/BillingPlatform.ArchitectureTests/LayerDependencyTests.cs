@@ -8,21 +8,27 @@ public sealed class LayerDependencyTests
     private static readonly Assembly[] DomainAssemblies =
     [
         typeof(Identity.Domain.AssemblyMarker).Assembly,
-        typeof(Organizations.Domain.AssemblyMarker).Assembly
+        typeof(Organizations.Domain.AssemblyMarker).Assembly,
+        typeof(Customers.Domain.AssemblyMarker).Assembly,
+        typeof(Catalog.Domain.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] ApplicationAssemblies =
     [
         typeof(Identity.Application.AssemblyMarker).Assembly,
         typeof(Organizations.Application.AssemblyMarker).Assembly,
-        typeof(SimulationClock.Application.AssemblyMarker).Assembly
+        typeof(SimulationClock.Application.AssemblyMarker).Assembly,
+        typeof(Customers.Application.AssemblyMarker).Assembly,
+        typeof(Catalog.Application.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] InfrastructureAssemblies =
     [
         typeof(Identity.Infrastructure.AssemblyMarker).Assembly,
         typeof(Organizations.Infrastructure.AssemblyMarker).Assembly,
-        typeof(SimulationClock.Infrastructure.AssemblyMarker).Assembly
+        typeof(SimulationClock.Infrastructure.AssemblyMarker).Assembly,
+        typeof(Customers.Infrastructure.AssemblyMarker).Assembly,
+        typeof(Catalog.Infrastructure.AssemblyMarker).Assembly
     ];
 
     [Fact]
