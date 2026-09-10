@@ -9,6 +9,8 @@
     <ProjectReference Include="..\..\Modules\Customers\BillingPlatform.Customers.Infrastructure\BillingPlatform.Customers.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\BillingPlatform.Catalog.Api\BillingPlatform.Catalog.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\BillingPlatform.Catalog.Infrastructure\BillingPlatform.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Subscriptions\BillingPlatform.Subscriptions.Api\BillingPlatform.Subscriptions.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Subscriptions\BillingPlatform.Subscriptions.Infrastructure\BillingPlatform.Subscriptions.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
   </ItemGroup>
 

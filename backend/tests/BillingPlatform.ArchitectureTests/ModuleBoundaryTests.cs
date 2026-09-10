@@ -95,6 +95,30 @@ public sealed class ModuleBoundaryTests
                 "BillingPlatform.Customers.Api",
                 "BillingPlatform.SimulationClock.Infrastructure"
             ]
+        },
+        {
+            "Subscriptions",
+            [
+                typeof(Subscriptions.Domain.AssemblyMarker).Assembly,
+                typeof(Subscriptions.Application.AssemblyMarker).Assembly,
+                typeof(Subscriptions.Infrastructure.AssemblyMarker).Assembly,
+                typeof(Subscriptions.Api.AssemblyMarker).Assembly
+            ],
+            [
+                "BillingPlatform.Identity.Domain",
+                "BillingPlatform.Identity.Infrastructure",
+                "BillingPlatform.Identity.Api",
+                "BillingPlatform.Organizations.Domain",
+                "BillingPlatform.Organizations.Infrastructure",
+                "BillingPlatform.Organizations.Api",
+                "BillingPlatform.Customers.Domain",
+                "BillingPlatform.Customers.Infrastructure",
+                "BillingPlatform.Customers.Api",
+                "BillingPlatform.Catalog.Domain",
+                "BillingPlatform.Catalog.Infrastructure",
+                "BillingPlatform.Catalog.Api",
+                "BillingPlatform.SimulationClock.Infrastructure"
+            ]
         }
     };
 

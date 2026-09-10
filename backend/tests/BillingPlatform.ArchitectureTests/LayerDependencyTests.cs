@@ -10,7 +10,8 @@ public sealed class LayerDependencyTests
         typeof(Identity.Domain.AssemblyMarker).Assembly,
         typeof(Organizations.Domain.AssemblyMarker).Assembly,
         typeof(Customers.Domain.AssemblyMarker).Assembly,
-        typeof(Catalog.Domain.AssemblyMarker).Assembly
+        typeof(Catalog.Domain.AssemblyMarker).Assembly,
+        typeof(Subscriptions.Domain.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] ApplicationAssemblies =
@@ -19,7 +20,8 @@ public sealed class LayerDependencyTests
         typeof(Organizations.Application.AssemblyMarker).Assembly,
         typeof(SimulationClock.Application.AssemblyMarker).Assembly,
         typeof(Customers.Application.AssemblyMarker).Assembly,
-        typeof(Catalog.Application.AssemblyMarker).Assembly
+        typeof(Catalog.Application.AssemblyMarker).Assembly,
+        typeof(Subscriptions.Application.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] InfrastructureAssemblies =
@@ -28,7 +30,8 @@ public sealed class LayerDependencyTests
         typeof(Organizations.Infrastructure.AssemblyMarker).Assembly,
         typeof(SimulationClock.Infrastructure.AssemblyMarker).Assembly,
         typeof(Customers.Infrastructure.AssemblyMarker).Assembly,
-        typeof(Catalog.Infrastructure.AssemblyMarker).Assembly
+        typeof(Catalog.Infrastructure.AssemblyMarker).Assembly,
+        typeof(Subscriptions.Infrastructure.AssemblyMarker).Assembly
     ];
 
     [Fact]

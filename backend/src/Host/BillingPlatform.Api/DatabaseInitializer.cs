@@ -2,6 +2,7 @@ using BillingPlatform.Catalog.Infrastructure.Persistence;
 using BillingPlatform.Customers.Infrastructure.Persistence;
 using BillingPlatform.Identity.Infrastructure.Persistence;
 using BillingPlatform.Organizations.Infrastructure.Persistence;
+using BillingPlatform.Subscriptions.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace BillingPlatform.Api;
@@ -26,5 +27,9 @@ internal static class DatabaseInitializer
         var catalogDbContext =
             scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
         await catalogDbContext.Database.MigrateAsync();
+
+        var subscriptionsDbContext =
+            scope.ServiceProvider.GetRequiredService<SubscriptionsDbContext>();
+        await subscriptionsDbContext.Database.MigrateAsync();
     }
 }

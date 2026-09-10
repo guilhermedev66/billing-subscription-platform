@@ -8,6 +8,9 @@ using BillingPlatform.Identity.Infrastructure;
 using BillingPlatform.Organizations.Api;
 using BillingPlatform.Organizations.Infrastructure;
 using BillingPlatform.SimulationClock.Infrastructure;
+using BillingPlatform.Subscriptions.Api;
+using BillingPlatform.Subscriptions.Application;
+using BillingPlatform.Subscriptions.Infrastructure;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -32,6 +35,8 @@ try
     builder.Services.AddOrganizationsModule(builder.Configuration);
     builder.Services.AddCustomersModule(builder.Configuration);
     builder.Services.AddCatalogModule(builder.Configuration);
+    builder.Services.AddSubscriptionsModule(builder.Configuration);
+    builder.Services.AddScoped<ISubscriptionPriceReader, CatalogSubscriptionPriceReader>();
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
     builder.Services.AddPlatformHealthChecks(builder.Configuration);
     builder.Services.AddFrontendCors(builder.Configuration);
@@ -57,6 +62,7 @@ try
     app.MapOrganizationEndpoints();
     app.MapCustomerEndpoints();
     app.MapCatalogEndpoints();
+    app.MapSubscriptionEndpoints();
 
     await DatabaseInitializer.ApplyMigrationsAsync(app.Services);
     await app.RunAsync();

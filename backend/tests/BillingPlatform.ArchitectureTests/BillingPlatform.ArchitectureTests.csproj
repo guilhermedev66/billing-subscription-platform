@@ -38,6 +38,10 @@
     <ProjectReference Include="..\..\src\Modules\Catalog\BillingPlatform.Catalog.Infrastructure\BillingPlatform.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Application\BillingPlatform.SimulationClock.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Api\BillingPlatform.Subscriptions.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Application\BillingPlatform.Subscriptions.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Domain\BillingPlatform.Subscriptions.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Infrastructure\BillingPlatform.Subscriptions.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
