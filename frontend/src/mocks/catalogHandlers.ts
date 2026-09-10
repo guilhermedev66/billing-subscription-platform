@@ -182,6 +182,12 @@ export const catalogHandlers = [
     return HttpResponse.json(matching)
   }),
 
+  http.get('/api/catalog/prices/:id', ({ params }) => {
+    const price = prices.find((candidate) => candidate.id === params.id)
+    if (!price) return problem(404, 'Price not found.')
+    return HttpResponse.json(price)
+  }),
+
   http.post('/api/catalog/prices', async ({ request }) => {
     const body = (await request.json()) as Partial<Omit<WirePrice, 'id' | 'organizationId' | 'tiers'>> & {
       tiers?: Omit<WireTier, 'id'>[]

@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import type { AuthSession, AuthUser } from '@/features/auth/types'
 import { catalogHandlers } from './catalogHandlers'
 import { customersHandlers } from './customersHandlers'
+import { subscriptionsHandlers } from './subscriptionsHandlers'
 
 /**
  * Stands in for the Identity + Organizations modules until Codex — Backend's
@@ -82,4 +83,5 @@ export const handlers = [
 
   ...customersHandlers,
   ...catalogHandlers,
+  ...subscriptionsHandlers,
 ]

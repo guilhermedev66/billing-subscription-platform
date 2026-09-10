@@ -10,6 +10,7 @@ import { PaymentsPage } from '@/pages/PaymentsPage'
 import { ProductDetailPage } from '@/pages/ProductDetailPage'
 import { ProductsPage } from '@/pages/ProductsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { SubscriptionDetailPage } from '@/pages/SubscriptionDetailPage'
 import { SubscriptionsPage } from '@/pages/SubscriptionsPage'
 import { AppLayout } from './AppLayout'
 import { RedirectIfAuthenticated } from './RedirectIfAuthenticated'
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
           { path: '/products', element: <ProductsPage /> },
           { path: '/products/:id', element: <ProductDetailPage /> },
           { path: '/subscriptions', element: <SubscriptionsPage /> },
+          { path: '/subscriptions/:id', element: <SubscriptionDetailPage /> },
           { path: '/invoices', element: <InvoicesPage /> },
           { path: '/payments', element: <PaymentsPage /> },
           { path: '/developers', element: <DevelopersPage /> },

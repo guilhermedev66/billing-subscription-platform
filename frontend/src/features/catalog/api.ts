@@ -150,6 +150,11 @@ export async function listPrices(productId?: string): Promise<Price[]> {
   return wirePrices.map(priceFromWire)
 }
 
+export async function getPrice(id: string): Promise<Price> {
+  const wirePrice = await api.get<WirePrice>(`/catalog/prices/${id}`)
+  return priceFromWire(wirePrice)
+}
+
 export async function createPrice(input: CreatePriceInput): Promise<Price> {
   const wirePrice = await api.post<WirePrice>('/catalog/prices', priceToWireRequest(input))
   return priceFromWire(wirePrice)
