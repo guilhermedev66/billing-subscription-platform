@@ -14,14 +14,16 @@ M6 (dashboard analytics + hardening) is a stretch milestone — build it only on
 
 Each milestone follows: plan → delegate → implement → test → review (Codex QA / Antigravity) → fix BLOCKER/IMPORTANT → commit → push → next milestone. No stopping to ask after each one.
 
-### M1 — Foundations
+### M1 — Foundations — COMPLETE
 - **Backend:** solution scaffold (per-module Domain/Application/Infrastructure/Api projects), `Directory.Build.props`, `ArchitectureTests` project wired in from day one, Identity + Organizations modules (auth, tenant boundary), `IVirtualClock` service, Serilog + OpenTelemetry wiring, health checks, Docker Compose (Postgres), base EF Core migrations.
 - **Frontend:** Vite+React+TS scaffold, Tailwind v4 tokens (zinc/slate neutral, semantic status colors per the research brief §6.2), light/dark theme system, app shell (sidebar, top nav, persistent Simulation Bar placeholder), auth screens, API client (fetch wrapper + ProblemDetails parsing).
 - **Exit criteria:** empty-but-running app, authenticated, deployed locally via Docker Compose, architecture tests green, CI pipeline running lint/build/test on push.
 
-### M2 — Customers & Catalog
+### M2 — Customers & Catalog — COMPLETE
 - **Backend:** Customers module (CRUD, credit balance, delinquency flag), Catalog module (Products, Prices — all four pricing models), tenant-isolation tests.
 - **Frontend:** Customers list/detail (slide-over sheet), Products/Prices pages with the tiered/per-seat price builder.
+- **Hardening from QA (Antigravity + Codex QA independent passes):** balance/delinquency are immutable via the public API after creation; cross-tenant customer lookups return a uniform 404 (no existence oracle); tiered prices must be contiguous (gaps rejected, not just overlaps); customer email is unique per organization (DB constraint + 409); `MeteredAggregation` validated against defined enum values; backend email validation tightened to match the frontend; frontend surfaces unmapped server validation errors in a form-level alert instead of dropping them; table rows use real interactive elements for full keyboard support.
+- **Deferred, consciously (OPTIONAL, not this milestone):** optimistic concurrency on Customer/Product/Price updates — no financial mutation happens until M3/M4, revisit then; real-time organization-membership revocation (currently token-lifetime bound); a hard ceiling on price-builder decimal input to avoid float/safe-integer edge cases before real money math starts consuming it.
 
 ### M3 — Subscriptions
 - **Backend:** Subscription state machine (trialing/active/past_due/unpaid/canceled/paused), proration engine, seat adjustments, optimistic concurrency.
