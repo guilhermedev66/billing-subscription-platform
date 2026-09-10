@@ -120,3 +120,28 @@ export async function apiErrorFromResponse(response: Response): Promise<ApiError
 export function networkError(): ApiError {
   return new ApiError('network', 0, defaultMessageFor('network'))
 }
+
+/**
+ * Splits ApiError.fieldErrors into messages that map onto a known form field
+ * and messages that don't. The real backend often reports one generic key
+ * (e.g. "customer", "catalog") for a domain-invariant violation rather than a
+ * specific field name — those keys, and any other unrecognized ones, MUST
+ * still reach the user (a form-level alert), never be silently dropped.
+ */
+export function splitFieldErrors<K extends string>(
+  fieldErrors: Record<string, string[]>,
+  knownFields: readonly K[],
+): { mapped: Partial<Record<K, string>>; unmapped: string[] } {
+  const mapped: Partial<Record<K, string>> = {}
+  const unmapped: string[] = []
+
+  for (const [field, messages] of Object.entries(fieldErrors)) {
+    if ((knownFields as readonly string[]).includes(field)) {
+      mapped[field as K] = messages[0]
+    } else {
+      unmapped.push(...messages)
+    }
+  }
+
+  return { mapped, unmapped }
+}

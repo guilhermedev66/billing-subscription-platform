@@ -1,4 +1,4 @@
-import { ApiError, apiErrorFromResponse, networkError } from './errors'
+import { ApiError, apiErrorFromResponse, networkError, splitFieldErrors } from './errors'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -55,5 +55,5 @@ export const api = {
   delete: <T>(path: string, options?: ApiFetchOptions) => apiFetch<T>(path, { ...options, method: 'DELETE' }),
 }
 
-export { ApiError }
+export { ApiError, splitFieldErrors }
 export type { ApiErrorKind, ProblemDetails } from './errors'

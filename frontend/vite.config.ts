@@ -16,5 +16,12 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Pin these regardless of a developer's .env.local (e.g. VITE_API_URL pointed at a
+    // real backend for manual dev-server testing) — tests must always exercise the MSW
+    // mocks via the default relative /api path, never a live server.
+    env: {
+      VITE_API_URL: '/api',
+      VITE_API_MOCKING: 'enabled',
+    },
   },
 })

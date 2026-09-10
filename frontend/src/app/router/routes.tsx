@@ -7,6 +7,7 @@ import { DevelopersPage } from '@/pages/DevelopersPage'
 import { InvoicesPage } from '@/pages/InvoicesPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PaymentsPage } from '@/pages/PaymentsPage'
+import { ProductDetailPage } from '@/pages/ProductDetailPage'
 import { ProductsPage } from '@/pages/ProductsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SubscriptionsPage } from '@/pages/SubscriptionsPage'
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
           { path: '/', element: <DashboardPage /> },
           { path: '/customers', element: <CustomersPage /> },
           { path: '/products', element: <ProductsPage /> },
+          { path: '/products/:id', element: <ProductDetailPage /> },
           { path: '/subscriptions', element: <SubscriptionsPage /> },
           { path: '/invoices', element: <InvoicesPage /> },
           { path: '/payments', element: <PaymentsPage /> },
