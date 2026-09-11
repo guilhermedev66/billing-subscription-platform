@@ -4,7 +4,9 @@ import { catalogHandlers } from './catalogHandlers'
 import { customersHandlers } from './customersHandlers'
 import { invoicesHandlers } from './invoicesHandlers'
 import { paymentsHandlers } from './paymentsHandlers'
+import { simulationHandlers } from './simulationHandlers'
 import { subscriptionsHandlers } from './subscriptionsHandlers'
+import { webhooksHandlers } from './webhooksHandlers'
 
 /**
  * Stands in for the Identity + Organizations modules until Codex — Backend's
@@ -88,4 +90,6 @@ export const handlers = [
   ...subscriptionsHandlers,
   ...invoicesHandlers,
   ...paymentsHandlers,
+  ...webhooksHandlers,
+  ...simulationHandlers,
 ]

@@ -14,10 +14,11 @@ import type { PaymentAttempt, PaymentOutcome } from './types'
  * useful only as a transient "just happened in this browser tab" supplement
  * for cross-invoice views, since there's no org-wide history endpoint).
  * There is still no separate "retry" endpoint — a retry is just calling
- * attempt again with a card (same endpoint). There is also a POST
- * /api/payments/dunning-sweep (org-wide, Idempotency-Key required), but
- * that's an M5 time-travel-console ops action, not something a user
- * triggers per invoice — intentionally not wrapped here.
+ * attempt again with a card (same endpoint). sweepDunning wraps the real
+ * POST /api/payments/dunning-sweep (org-wide, Idempotency-Key required) —
+ * it's an M5 time-travel-console ops action the Simulation Bar's "Process
+ * Dunning Sweep" batch operation calls, not something a user triggers per
+ * invoice, which is why it lives here rather than a per-invoice UI.
  */
 
 type WirePaymentOutcome = 0 | 1 | 2 | 3 | 4 | 5
@@ -79,4 +80,40 @@ export async function attemptPayment(invoiceId: string, cardNumber: string): Pro
 export async function listPaymentAttempts(invoiceId: string): Promise<PaymentAttempt[]> {
   const wireAttempts = await api.get<WirePaymentAttempt[]>(`/payments/invoices/${invoiceId}/attempts`)
   return wireAttempts.map(attemptFromWire)
+}
+
+interface WireDunningSweepAttempt {
+  attempt: WirePaymentAttempt
+  invoice: WireInvoice
+}
+
+interface WireDunningSweepResult {
+  considered: number
+  processed: number
+  succeeded: number
+  failed: number
+  becameUncollectible: number
+  attempts: WireDunningSweepAttempt[]
+}
+
+export interface DunningSweepResult {
+  considered: number
+  processed: number
+  succeeded: number
+  failed: number
+  becameUncollectible: number
+  attempts: PaymentAttemptResult[]
+}
+
+/** Real endpoint (BillingPlatform.Payments.Api's PaymentsEndpoints.SweepAsync) — org-wide, org-scoped via JWT. Charges every open invoice whose nextRetryAt is due, using the card from its most recent attempt. */
+export async function sweepDunning(): Promise<DunningSweepResult> {
+  const wireResult = await api.post<WireDunningSweepResult>('/payments/dunning-sweep', undefined, { headers: idempotencyHeaders() })
+  return {
+    considered: wireResult.considered,
+    processed: wireResult.processed,
+    succeeded: wireResult.succeeded,
+    failed: wireResult.failed,
+    becameUncollectible: wireResult.becameUncollectible,
+    attempts: wireResult.attempts.map((entry) => ({ attempt: attemptFromWire(entry.attempt), invoice: invoiceFromWire(entry.invoice) })),
+  }
 }
