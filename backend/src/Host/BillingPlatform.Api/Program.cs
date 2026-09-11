@@ -16,6 +16,8 @@ using BillingPlatform.SimulationClock.Infrastructure;
 using BillingPlatform.Subscriptions.Api;
 using BillingPlatform.Subscriptions.Application;
 using BillingPlatform.Subscriptions.Infrastructure;
+using BillingPlatform.Webhooks.Api;
+using BillingPlatform.Webhooks.Infrastructure;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -34,6 +36,9 @@ try
 
     builder.Services.AddProblemDetails();
     builder.Services.AddOpenApi();
+    builder.Services.AddAuthorization(options =>
+        options.AddPolicy("simulation-operator", policy =>
+            policy.RequireClaim("simulation_operator", "true")));
     builder.Services.AddSimulationClock();
     builder.Services.AddIdentityRateLimiting();
     builder.Services.AddIdentityModule(builder.Configuration);
@@ -43,10 +48,14 @@ try
     builder.Services.AddSubscriptionsModule(builder.Configuration);
     builder.Services.AddBillingModule(builder.Configuration);
     builder.Services.AddPaymentsModule(builder.Configuration);
+    builder.Services.AddWebhooksModule(builder.Configuration);
     builder.Services.AddScoped<ISubscriptionPriceReader, CatalogSubscriptionPriceReader>();
     builder.Services.AddScoped<ISubscriptionChangeBillingOrchestrator, SubscriptionChangeBillingOrchestrator>();
+    builder.Services.AddScoped<ISubscriptionMutationCoordinator, SubscriptionMutationCoordinator>();
     builder.Services.AddScoped<FinancialTransactionCoordinator>();
     builder.Services.AddScoped<IPaymentTransactionCoordinator, PaymentTransactionCoordinator>();
+    builder.Services.AddScoped<RenewalCronService>();
+    builder.Services.AddScoped<SimulationSeeder>();
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
     builder.Services.AddPlatformHealthChecks(builder.Configuration);
     builder.Services.AddFrontendCors(builder.Configuration);
@@ -75,6 +84,8 @@ try
     app.MapSubscriptionEndpoints();
     app.MapBillingEndpoints();
     app.MapPaymentEndpoints();
+    app.MapWebhookEndpoints();
+    app.MapSimulationEndpoints();
 
     await DatabaseInitializer.ApplyMigrationsAsync(app.Services);
     await app.RunAsync();

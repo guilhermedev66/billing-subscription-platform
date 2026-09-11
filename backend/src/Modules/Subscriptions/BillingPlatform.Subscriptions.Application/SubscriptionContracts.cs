@@ -58,6 +58,33 @@ public interface ISubscriptionChangeBillingOrchestrator
         CancellationToken cancellationToken = default);
 }
 
+public interface ISubscriptionMutationCoordinator
+{
+    Task<SubscriptionMutationResult<SubscriptionSummary>?> CreateAsync(
+        Guid organizationId,
+        CreateSubscriptionCommand command,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionMutationResult<SubscriptionSummary>?> CancelAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionMutationResult<SubscriptionSummary>?> PauseAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionMutationResult<SubscriptionSummary>?> ResumeAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken = default);
+}
+
 public interface ISubscriptionPaymentStateService
 {
     Task<SubscriptionSummary?> GetAsync(
@@ -151,5 +178,12 @@ public interface ISubscriptionService
         Guid organizationId,
         Guid subscriptionId,
         string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    Task<SubscriptionSummary?> RenewAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        DateTimeOffset now,
+        DateTimeOffset newPeriodEnd,
         CancellationToken cancellationToken = default);
 }

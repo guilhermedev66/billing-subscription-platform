@@ -33,7 +33,7 @@ public static class SubscriptionsEndpoints
         CreateSubscriptionRequest request,
         ClaimsPrincipal principal,
         HttpRequest httpRequest,
-        ISubscriptionService subscriptionService,
+        ISubscriptionMutationCoordinator mutationCoordinator,
         CancellationToken cancellationToken)
     {
         if (!TryGetOrganizationId(principal, out var organizationId))
@@ -48,7 +48,7 @@ public static class SubscriptionsEndpoints
 
         try
         {
-            var result = await subscriptionService.CreateAsync(
+            var result = await mutationCoordinator.CreateAsync(
                 organizationId,
                 new CreateSubscriptionCommand(request.CustomerId, request.PriceId, request.SeatCount),
                 idempotencyKey,
@@ -188,39 +188,39 @@ public static class SubscriptionsEndpoints
         Guid subscriptionId,
         ClaimsPrincipal principal,
         HttpRequest httpRequest,
-        ISubscriptionService subscriptionService,
+        ISubscriptionMutationCoordinator mutationCoordinator,
         CancellationToken cancellationToken) =>
         ExecuteTransitionAsync(
             subscriptionId,
             principal,
             httpRequest,
-            subscriptionService.CancelAsync,
+            mutationCoordinator.CancelAsync,
             cancellationToken);
 
     private static Task<IResult> PauseAsync(
         Guid subscriptionId,
         ClaimsPrincipal principal,
         HttpRequest httpRequest,
-        ISubscriptionService subscriptionService,
+        ISubscriptionMutationCoordinator mutationCoordinator,
         CancellationToken cancellationToken) =>
         ExecuteTransitionAsync(
             subscriptionId,
             principal,
             httpRequest,
-            subscriptionService.PauseAsync,
+            mutationCoordinator.PauseAsync,
             cancellationToken);
 
     private static Task<IResult> ResumeAsync(
         Guid subscriptionId,
         ClaimsPrincipal principal,
         HttpRequest httpRequest,
-        ISubscriptionService subscriptionService,
+        ISubscriptionMutationCoordinator mutationCoordinator,
         CancellationToken cancellationToken) =>
         ExecuteTransitionAsync(
             subscriptionId,
             principal,
             httpRequest,
-            subscriptionService.ResumeAsync,
+            mutationCoordinator.ResumeAsync,
             cancellationToken);
 
     private static async Task<IResult> ExecuteTransitionAsync(

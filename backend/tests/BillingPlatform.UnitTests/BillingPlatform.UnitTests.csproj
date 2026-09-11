@@ -28,6 +28,8 @@
     <ProjectReference Include="..\..\src\Modules\Subscriptions\BillingPlatform.Subscriptions.Domain\BillingPlatform.Subscriptions.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Billing\BillingPlatform.Billing.Domain\BillingPlatform.Billing.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Domain\BillingPlatform.Payments.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Application\BillingPlatform.Webhooks.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Infrastructure\BillingPlatform.Webhooks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

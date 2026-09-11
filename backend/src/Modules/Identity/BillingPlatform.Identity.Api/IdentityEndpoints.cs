@@ -65,7 +65,7 @@ public static class IdentityEndpoints
             user.Id,
             new CreateOrganizationCommand(request.OrganizationName, "USD", "INV", true),
             cancellationToken);
-        var accessToken = tokenService.Create(user, organization.Id);
+        var accessToken = tokenService.Create(user, organization.Id, organization.SimulationModeEnabled);
         transaction.Complete();
 
         return Results.Created(
@@ -112,7 +112,7 @@ public static class IdentityEndpoints
                 title: "Organization membership required");
         }
 
-        var accessToken = tokenService.Create(user, organization.Id);
+        var accessToken = tokenService.Create(user, organization.Id, organization.SimulationModeEnabled);
 
         return Results.Ok(CreateSession(accessToken.Token, user, organization));
     }

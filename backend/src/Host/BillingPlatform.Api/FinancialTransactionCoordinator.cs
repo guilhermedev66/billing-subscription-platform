@@ -1,6 +1,7 @@
 using BillingPlatform.Billing.Infrastructure.Persistence;
 using BillingPlatform.Payments.Infrastructure.Persistence;
 using BillingPlatform.Subscriptions.Infrastructure.Persistence;
+using BillingPlatform.Webhooks.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -9,7 +10,8 @@ namespace BillingPlatform.Api;
 internal sealed class FinancialTransactionCoordinator(
     SubscriptionsDbContext subscriptionsDbContext,
     BillingDbContext billingDbContext,
-    PaymentsDbContext paymentsDbContext)
+    PaymentsDbContext paymentsDbContext,
+    WebhooksDbContext webhooksDbContext)
 {
     public async Task<T> ExecuteAsync<T>(
         Func<CancellationToken, Task<T>> action,
@@ -18,6 +20,7 @@ internal sealed class FinancialTransactionCoordinator(
         var sharedConnection = subscriptionsDbContext.Database.GetDbConnection();
         billingDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
         paymentsDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
+        webhooksDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
 
         await using var transaction =
             await subscriptionsDbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -25,6 +28,9 @@ internal sealed class FinancialTransactionCoordinator(
             transaction.GetDbTransaction(),
             cancellationToken);
         await using var paymentsTransaction = await paymentsDbContext.Database.UseTransactionAsync(
+            transaction.GetDbTransaction(),
+            cancellationToken);
+        await using var webhooksTransaction = await webhooksDbContext.Database.UseTransactionAsync(
             transaction.GetDbTransaction(),
             cancellationToken);
 
@@ -40,6 +46,7 @@ internal sealed class FinancialTransactionCoordinator(
             subscriptionsDbContext.ChangeTracker.Clear();
             billingDbContext.ChangeTracker.Clear();
             paymentsDbContext.ChangeTracker.Clear();
+            webhooksDbContext.ChangeTracker.Clear();
             throw;
         }
     }

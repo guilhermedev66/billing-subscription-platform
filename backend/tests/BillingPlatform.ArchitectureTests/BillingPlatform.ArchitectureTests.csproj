@@ -50,6 +50,10 @@
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Application\BillingPlatform.Payments.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Domain\BillingPlatform.Payments.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Infrastructure\BillingPlatform.Payments.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Api\BillingPlatform.Webhooks.Api.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Application\BillingPlatform.Webhooks.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Domain\BillingPlatform.Webhooks.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Infrastructure\BillingPlatform.Webhooks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

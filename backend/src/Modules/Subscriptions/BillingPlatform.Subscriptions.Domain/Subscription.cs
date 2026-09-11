@@ -171,6 +171,24 @@ public sealed class Subscription
         AdvanceVersion();
     }
 
+    public void Renew(DateTimeOffset newPeriodEnd)
+    {
+        if (Status != SubscriptionStatus.Active)
+        {
+            throw InvalidTransition("renew", "Only active subscriptions can renew.");
+        }
+
+        var normalizedPeriodEnd = newPeriodEnd.ToUniversalTime();
+        if (normalizedPeriodEnd <= CurrentPeriodEnd)
+        {
+            throw new ArgumentException("The renewed period must end after the current period.", nameof(newPeriodEnd));
+        }
+
+        CurrentPeriodStart = CurrentPeriodEnd;
+        CurrentPeriodEnd = normalizedPeriodEnd;
+        AdvanceVersion();
+    }
+
     // Reserved for the M4 dunning engine; M3 does not expose these transitions as endpoints.
     public void MarkPastDue()
     {

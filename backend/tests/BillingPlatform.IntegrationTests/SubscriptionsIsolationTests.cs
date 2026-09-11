@@ -782,4 +782,12 @@ internal sealed class ConcurrencyThrowingSubscriptionService : ISubscriptionServ
         string idempotencyKey,
         CancellationToken cancellationToken = default) =>
         Task.FromResult<SubscriptionMutationResult<SubscriptionSummary>?>(null);
+
+    public Task<SubscriptionSummary?> RenewAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        DateTimeOffset now,
+        DateTimeOffset newPeriodEnd,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult<SubscriptionSummary?>(null);
 }

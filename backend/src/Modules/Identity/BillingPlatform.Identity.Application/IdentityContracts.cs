@@ -28,5 +28,8 @@ public interface IIdentityService
 
 public interface ITokenService
 {
-    AccessToken Create(IdentityUserInfo user, Guid? organizationId);
+    AccessToken Create(
+        IdentityUserInfo user,
+        Guid? organizationId,
+        bool simulationModeEnabled = false);
 }

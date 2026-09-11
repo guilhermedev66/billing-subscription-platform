@@ -178,6 +178,40 @@ public sealed class ModuleBoundaryTests
                 "BillingPlatform.Subscriptions.Api",
                 "BillingPlatform.SimulationClock.Infrastructure"
             ]
+        },
+        {
+            "Webhooks",
+            [
+                typeof(Webhooks.Domain.AssemblyMarker).Assembly,
+                typeof(Webhooks.Application.AssemblyMarker).Assembly,
+                typeof(Webhooks.Infrastructure.AssemblyMarker).Assembly,
+                typeof(Webhooks.Api.AssemblyMarker).Assembly
+            ],
+            [
+                "BillingPlatform.Identity.Domain",
+                "BillingPlatform.Identity.Infrastructure",
+                "BillingPlatform.Identity.Api",
+                "BillingPlatform.Organizations.Domain",
+                "BillingPlatform.Organizations.Infrastructure",
+                "BillingPlatform.Organizations.Api",
+                "BillingPlatform.Customers.Domain",
+                "BillingPlatform.Customers.Infrastructure",
+                "BillingPlatform.Customers.Api",
+                "BillingPlatform.Catalog.Domain",
+                "BillingPlatform.Catalog.Infrastructure",
+                "BillingPlatform.Catalog.Api",
+                "BillingPlatform.Subscriptions.Domain",
+                "BillingPlatform.Subscriptions.Infrastructure",
+                "BillingPlatform.Subscriptions.Api",
+                "BillingPlatform.Billing.Domain",
+                "BillingPlatform.Billing.Infrastructure",
+                "BillingPlatform.Billing.Api",
+                "BillingPlatform.Payments.Domain",
+                "BillingPlatform.Payments.Application",
+                "BillingPlatform.Payments.Infrastructure",
+                "BillingPlatform.Payments.Api",
+                "BillingPlatform.SimulationClock.Infrastructure"
+            ]
         }
     };
 

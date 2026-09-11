@@ -221,6 +221,34 @@ internal sealed class SubscriptionService(
         TransitionAsync(organizationId, subscriptionId, "resume", idempotencyKey,
             subscription => subscription.Resume(), cancellationToken);
 
+    public async Task<SubscriptionSummary?> RenewAsync(
+        Guid organizationId,
+        Guid subscriptionId,
+        DateTimeOffset now,
+        DateTimeOffset newPeriodEnd,
+        CancellationToken cancellationToken = default)
+    {
+        var subscription = await GetTrackedAsync(organizationId, subscriptionId, cancellationToken);
+        if (subscription is null || subscription.Status != SubscriptionStatus.Active ||
+            subscription.CurrentPeriodEnd > now.ToUniversalTime())
+        {
+            return null;
+        }
+
+        subscription.Renew(newPeriodEnd);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            dbContext.ChangeTracker.Clear();
+            throw new SubscriptionConcurrencyException();
+        }
+
+        return ToSummary(subscription);
+    }
+
     public Task<SubscriptionSummary?> MarkPastDueAsync(
         Guid organizationId,
         Guid subscriptionId,

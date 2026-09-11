@@ -2,6 +2,7 @@ using BillingPlatform.Billing.Application;
 using BillingPlatform.Billing.Domain;
 using BillingPlatform.Payments.Application;
 using BillingPlatform.Subscriptions.Application;
+using BillingPlatform.Webhooks.Application;
 
 namespace BillingPlatform.Api;
 
@@ -9,7 +10,8 @@ internal sealed class SubscriptionChangeBillingOrchestrator(
     FinancialTransactionCoordinator transactionCoordinator,
     ISubscriptionService subscriptionService,
     IInvoiceService invoiceService,
-    IPaymentService paymentService) : ISubscriptionChangeBillingOrchestrator
+    IPaymentService paymentService,
+    IWebhookEventWriter webhookEventWriter) : ISubscriptionChangeBillingOrchestrator
 {
     public Task<SubscriptionMutationResult<SubscriptionProrationReceipt>?> ApplyAsync(
         Guid organizationId,
@@ -31,17 +33,52 @@ internal sealed class SubscriptionChangeBillingOrchestrator(
                     return result;
                 }
 
-                await ProcessBillingAsync(
+                var billing = await ProcessBillingAsync(
                     organizationId,
                     result.Value,
                     idempotencyKey,
                     command.CardNumber,
                     innerCancellationToken);
+                await webhookEventWriter.EnqueueAsync(
+                    organizationId, "subscription.changed", "subscription", result.Value.Subscription.Id,
+                    new { subscription = result.Value.Subscription, proration = result.Value.Proration },
+                    innerCancellationToken);
+                if (billing.Invoice is not null)
+                {
+                    await webhookEventWriter.EnqueueAsync(
+                        organizationId, "invoice.created", "invoice", billing.Invoice.Id,
+                        new { invoice = billing.Invoice }, innerCancellationToken);
+                }
+                if (billing.Payment is not null)
+                {
+                    await webhookEventWriter.EnqueueAsync(
+                        organizationId, "payment.attempted", "invoice", billing.Payment.Invoice.Id,
+                        new { attempt = billing.Payment.Attempt, invoice = billing.Payment.Invoice },
+                        innerCancellationToken);
+                    if (billing.Payment.Attempt.Outcome is
+                        BillingPlatform.Payments.Domain.PaymentOutcome.Declined or
+                        BillingPlatform.Payments.Domain.PaymentOutcome.InsufficientFunds)
+                    {
+                        await webhookEventWriter.EnqueueAsync(
+                            organizationId, "dunning.outcome", "invoice", billing.Payment.Invoice.Id,
+                            new { attempt = billing.Payment.Attempt, invoice = billing.Payment.Invoice },
+                            innerCancellationToken);
+                    }
+                }
+                var paidInvoice = billing.Payment?.Invoice.Status == InvoiceStatus.Paid
+                    ? billing.Payment.Invoice
+                    : billing.Invoice?.Status == InvoiceStatus.Paid ? billing.Invoice : null;
+                if (paidInvoice is not null)
+                {
+                    await webhookEventWriter.EnqueueAsync(
+                        organizationId, "invoice.paid", "invoice", paidInvoice.Id,
+                        new { invoice = paidInvoice }, innerCancellationToken);
+                }
                 return result;
             },
             cancellationToken);
 
-    private async Task ProcessBillingAsync(
+    private async Task<BillingOutcome> ProcessBillingAsync(
         Guid organizationId,
         SubscriptionProrationReceipt receipt,
         string sourceOperationKey,
@@ -50,7 +87,7 @@ internal sealed class SubscriptionChangeBillingOrchestrator(
     {
         if (receipt.Proration.AmountDueImmediatelyCents == 0)
         {
-            return;
+            return new BillingOutcome(null, null);
         }
 
         var lineItems = new List<InvoiceLineItemInput>();
@@ -86,13 +123,13 @@ internal sealed class SubscriptionChangeBillingOrchestrator(
 
         if (receipt.Proration.AmountDueImmediatelyCents < 0)
         {
-            _ = await invoiceService.MarkPaidAsync(
+            var settled = await invoiceService.MarkPaidAsync(
                 organizationId,
                 invoice.Id,
                 invoice.IssueDate,
                 cancellationToken)
                 ?? throw new InvalidOperationException("The credit invoice could not be settled.");
-            return;
+            return new BillingOutcome(settled, null);
         }
 
         if (string.IsNullOrWhiteSpace(cardNumber))
@@ -104,17 +141,20 @@ internal sealed class SubscriptionChangeBillingOrchestrator(
 
         try
         {
-            _ = await paymentService.AttemptAsync(
+            var payment = await paymentService.AttemptAsync(
                 organizationId,
                 invoice.Id,
                 cardNumber,
                 $"subscription-change-payment:{sourceOperationKey}",
                 cancellationToken)
                 ?? throw new InvalidOperationException("The proration payment could not be created.");
+            return new BillingOutcome(invoice, payment);
         }
         catch (PaymentIdempotencyConflictException exception)
         {
             throw new SubscriptionBillingConflictException(exception.Message);
         }
     }
+
+    private sealed record BillingOutcome(InvoiceSummary? Invoice, PaymentResult? Payment);
 }

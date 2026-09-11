@@ -8,7 +8,10 @@ namespace BillingPlatform.Identity.Infrastructure;
 
 internal sealed class JwtTokenService(JwtOptions options, TimeProvider timeProvider) : ITokenService
 {
-    public AccessToken Create(IdentityUserInfo user, Guid? organizationId)
+    public AccessToken Create(
+        IdentityUserInfo user,
+        Guid? organizationId,
+        bool simulationModeEnabled = false)
     {
         var issuedAt = timeProvider.GetUtcNow();
         var expiresAt = issuedAt.AddMinutes(options.LifetimeMinutes);
@@ -22,6 +25,10 @@ internal sealed class JwtTokenService(JwtOptions options, TimeProvider timeProvi
         if (organizationId is not null)
         {
             claims.Add(new Claim("org_id", organizationId.Value.ToString()));
+            if (simulationModeEnabled)
+            {
+                claims.Add(new Claim("simulation_operator", "true"));
+            }
         }
 
         var credentials = new SigningCredentials(
