@@ -436,7 +436,10 @@ public sealed class M5WebhooksAndSimulationIntegrationTests(PostgreSqlFixture da
         var unchangedSubscription = await subscriptionResponse.Content
             .ReadFromJsonAsync<BillingSubscriptionResponse>();
         Assert.NotNull(unchangedSubscription);
-        Assert.Equal(subscriptionB.CurrentPeriodEnd, unchangedSubscription.CurrentPeriodEnd);
+        // Postgres timestamptz rounds to microseconds while .NET ticks are 100ns - a value
+        // read back after a DB round-trip can differ from the in-memory original by a few
+        // ticks even when nothing actually changed. Assert within a tolerance, not bit-exact.
+        Assert.Equal(subscriptionB.CurrentPeriodEnd, unchangedSubscription.CurrentPeriodEnd, TimeSpan.FromMilliseconds(1));
     }
 
     [Fact]
