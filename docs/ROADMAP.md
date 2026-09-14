@@ -60,9 +60,11 @@ Each milestone follows: plan → delegate → implement → test → review (Cod
   - Webhook secret rotation (dual-secret grace period) and encryption-at-rest for stored secrets — real security hardening, correctly scoped to M6's "full security review pass," not a webhook-feature gap.
 - **This was the milestone with the highest-value test scenarios**, and it earned the hard review — see Test Strategy below.
 
-### M6 — Analytics & Production Polish (stretch)
-- **Backend:** MRR/ARR/churn/waterfall read models.
-- **Frontend:** Executive dashboard.
+### M6 — Analytics & Production Polish (stretch) — BACKEND IN PROGRESS
+- **Backend: Reporting module — DONE, pending CI confirmation.** Tenant-scoped append-only source-event log (idempotent on source-event-id) fed by immutable before/after facts from Subscriptions (create/change/renew/status transitions) and Catalog (price updates), each written inside the same shared cross-module transaction as the domain mutation (`FinancialTransactionCoordinator` / new `PriceMutationCoordinator`). Rebuildable `subscription_snapshots` + an `mrr_movements` waterfall ledger derive integer-cent annualized run-rate per pricing model, with New/Expansion/Contraction/Churn attribution, per-currency current MRR/ARR/PastDue-at-risk totals, and a `/api/reporting/summary|waterfall|events/{id}|rebuild` HTTP surface (tenant-scoped, uniform 404s). Catalog `Price` gained a `Version` column so a subscription's revenue fact stays pinned to the price terms it actually saw. See `backend/src/Modules/Reporting/REPORTING_DESIGN.md`.
+  - **Hardening from QA (Codex QA independent adversarial pass):** a BLOCKER — a movement's "before" amount was read from the live replay snapshot instead of the fact's own immutable Before terms, so out-of-order ingestion with a version gap silently mis-attributed delta and left the waterfall unreconciled against the final snapshot. Fixed to always derive from `fact.Before`; regression test reproduces the exact gap (ingest order v1/v3/v2), confirmed passing against real PostgreSQL.
+  - **Deferred, consciously:** backfilling Reporting facts for subscriptions that predate this module — today's mutable Catalog prices can't safely stand in for the price terms an old transition actually saw.
+- **Frontend:** Executive dashboard — not started. UX/IA spec exists in the Maestri canvas note "M6 Analytics Research" (hero KPI grid, at-risk revenue banner, MRR waterfall bars, live activity stream) — reuse `billingStatusTokens`, no fake vanity metrics, no chart library needed for the waterfall bars.
 - Full security review pass, docs pass, deploy to Render, production smoke test, portfolio freeze.
 
 ## Test strategy — required scenarios
