@@ -59,7 +59,8 @@ public sealed record PriceSummary(
     long? MeteredUnitAmountCents,
     MeteredAggregation? MeteredAggregation,
     IReadOnlyList<PricingTierSummary> Tiers,
-    int? TrialDays);
+    int? TrialDays,
+    int Version = 1);
 
 public interface IProductService
 {

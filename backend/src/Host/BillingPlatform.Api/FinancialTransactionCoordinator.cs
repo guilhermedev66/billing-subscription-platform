@@ -2,6 +2,7 @@ using BillingPlatform.Billing.Infrastructure.Persistence;
 using BillingPlatform.Payments.Infrastructure.Persistence;
 using BillingPlatform.Subscriptions.Infrastructure.Persistence;
 using BillingPlatform.Webhooks.Infrastructure.Persistence;
+using BillingPlatform.Reporting.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -11,7 +12,8 @@ internal sealed class FinancialTransactionCoordinator(
     SubscriptionsDbContext subscriptionsDbContext,
     BillingDbContext billingDbContext,
     PaymentsDbContext paymentsDbContext,
-    WebhooksDbContext webhooksDbContext)
+    WebhooksDbContext webhooksDbContext,
+    ReportingDbContext reportingDbContext)
 {
     public async Task<T> ExecuteAsync<T>(
         Func<CancellationToken, Task<T>> action,
@@ -21,6 +23,7 @@ internal sealed class FinancialTransactionCoordinator(
         billingDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
         paymentsDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
         webhooksDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
+        reportingDbContext.Database.SetDbConnection(sharedConnection, contextOwnsConnection: false);
 
         await using var transaction =
             await subscriptionsDbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -33,6 +36,8 @@ internal sealed class FinancialTransactionCoordinator(
         await using var webhooksTransaction = await webhooksDbContext.Database.UseTransactionAsync(
             transaction.GetDbTransaction(),
             cancellationToken);
+        await using var reportingTransaction = await reportingDbContext.Database.UseTransactionAsync(
+            transaction.GetDbTransaction(), cancellationToken);
 
         try
         {
@@ -47,6 +52,7 @@ internal sealed class FinancialTransactionCoordinator(
             billingDbContext.ChangeTracker.Clear();
             paymentsDbContext.ChangeTracker.Clear();
             webhooksDbContext.ChangeTracker.Clear();
+            reportingDbContext.ChangeTracker.Clear();
             throw;
         }
     }

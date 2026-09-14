@@ -26,6 +26,9 @@
     <ProjectReference Include="..\..\Modules\SimulationClock\BillingPlatform.SimulationClock.Infrastructure\BillingPlatform.SimulationClock.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Webhooks\BillingPlatform.Webhooks.Api\BillingPlatform.Webhooks.Api.csproj" />
     <ProjectReference Include="..\..\Modules\Webhooks\BillingPlatform.Webhooks.Infrastructure\BillingPlatform.Webhooks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\BillingPlatform.Reporting.Api\BillingPlatform.Reporting.Api.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\BillingPlatform.Reporting.Infrastructure\BillingPlatform.Reporting.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Reporting\BillingPlatform.Reporting.Domain\BillingPlatform.Reporting.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

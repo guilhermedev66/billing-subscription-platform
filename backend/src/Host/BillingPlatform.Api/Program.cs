@@ -18,6 +18,9 @@ using BillingPlatform.Subscriptions.Application;
 using BillingPlatform.Subscriptions.Infrastructure;
 using BillingPlatform.Webhooks.Api;
 using BillingPlatform.Webhooks.Infrastructure;
+using BillingPlatform.Reporting.Api;
+using BillingPlatform.Reporting.Infrastructure;
+using BillingPlatform.Catalog.Application;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -49,6 +52,8 @@ try
     builder.Services.AddBillingModule(builder.Configuration);
     builder.Services.AddPaymentsModule(builder.Configuration);
     builder.Services.AddWebhooksModule(builder.Configuration);
+    builder.Services.AddReportingModule(builder.Configuration);
+    builder.Services.AddScoped<IPriceMutationCoordinator, PriceMutationCoordinator>();
     builder.Services.AddScoped<ISubscriptionPriceReader, CatalogSubscriptionPriceReader>();
     builder.Services.AddScoped<ISubscriptionChangeBillingOrchestrator, SubscriptionChangeBillingOrchestrator>();
     builder.Services.AddScoped<ISubscriptionMutationCoordinator, SubscriptionMutationCoordinator>();
@@ -85,6 +90,7 @@ try
     app.MapBillingEndpoints();
     app.MapPaymentEndpoints();
     app.MapWebhookEndpoints();
+    app.MapReportingEndpoints();
     app.MapSimulationEndpoints();
 
     await DatabaseInitializer.ApplyMigrationsAsync(app.Services);

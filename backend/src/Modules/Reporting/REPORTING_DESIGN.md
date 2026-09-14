@@ -1,7 +1,8 @@
 # Reporting read-model design
 
-This wave creates only the module boundary. The event log, projections, calculations, migrations,
-dependency registration, and HTTP endpoints belong to the next implementation wave.
+The module owns the source-event audit log, rebuildable subscription snapshots, the
+`reporting.mrr_movements` waterfall ledger, and current read endpoints. Subscription and Catalog
+source contracts carry immutable effective price terms and source versions.
 
 ## Source facts and ownership
 
@@ -56,7 +57,19 @@ proration lines and contract changes. The reconciliation is:
 
 `ending ARR = starting ARR + new + expansion - contraction - churn`.
 
-Before implementation, define source contracts for subscription creation/change/status and Catalog
-price updates. The current Catalog permits price mutation, so Reporting must receive an effective
-price-change fact and revalue affected subscriptions deliberately rather than silently consulting
-the latest price during a historical rebuild.
+`reactivation` is a reason on Expansion movements and a separately exposed subset of that bucket;
+it is not added again in the reconciliation. PastDue run rate remains in current ARR/MRR and is
+also exposed as at-risk ARR/MRR. The API rounds monthly cents only after summing annualized cents
+for each organization and currency.
+
+The source log is append-only under a unique `(organization_id, source_event_id)` guard. Rebuild
+replays facts in durable ingestion order, checks subscription and price versions, and leaves late
+older facts in the audit log without replacing newer snapshots. Catalog price updates revalue
+matching snapshots from the captured after-terms. HTTP reads are `/api/reporting/summary`,
+`/api/reporting/waterfall?from=...&to=...`, and `/api/reporting/events/{sourceEventId}`; a
+simulation-operator can run `POST /api/reporting/rebuild` for their organization.
+
+The source contracts for subscription creation/change/status and Catalog price updates live in
+their respective Application projects. The current Catalog permits price mutation, so Reporting
+receives an effective price-change fact and revalues affected subscriptions deliberately rather
+than consulting the latest price during a historical rebuild.

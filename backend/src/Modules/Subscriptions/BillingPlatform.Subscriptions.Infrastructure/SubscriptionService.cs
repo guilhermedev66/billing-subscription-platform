@@ -18,7 +18,8 @@ internal sealed class SubscriptionService(
     IVirtualClock clock,
     ICustomerService customerService,
     ISubscriptionPriceReader priceReader,
-    IProrationCalculator prorationCalculator) : ISubscriptionService, ISubscriptionPaymentStateService
+    IProrationCalculator prorationCalculator,
+    ISubscriptionRevenueEventWriter revenueEventWriter) : ISubscriptionService, ISubscriptionPaymentStateService
 {
     private const string IdempotencyConstraintName =
         "ux_idempotency_records_organization_id_operation_key";
@@ -89,7 +90,8 @@ internal sealed class SubscriptionService(
                 201,
                 $"/api/subscriptions/{subscription.Id}",
                 transaction,
-                cancellationToken);
+                cancellationToken,
+                CreateRevenueEvent(null, subscription, price, "created"));
         }
         catch (ArgumentException)
         {
@@ -167,6 +169,7 @@ internal sealed class SubscriptionService(
             }
 
             var prepared = await BuildReceiptAsync(subscription, command, cancellationToken);
+            var before = ToRevenueState(subscription, prepared.CurrentPrice);
             if (subscription.PriceId != prepared.NewPriceId || subscription.SeatCount != prepared.NewSeatCount)
             {
                 subscription.ChangePlan(prepared.NewPriceId, prepared.NewSeatCount);
@@ -183,7 +186,8 @@ internal sealed class SubscriptionService(
                 200,
                 null,
                 transaction,
-                cancellationToken);
+                cancellationToken,
+                CreateRevenueEvent(before, subscription, prepared.NewPrice, "changed"));
         }
         catch (ArgumentException)
         {
@@ -235,10 +239,14 @@ internal sealed class SubscriptionService(
             return null;
         }
 
+        var price = await RequirePriceAsync(subscription, cancellationToken);
+        var before = ToRevenueState(subscription, price);
         subscription.Renew(newPeriodEnd);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            await revenueEventWriter.AppendAsync(
+                CreateRevenueEvent(before, subscription, price, "renewed"), cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -257,6 +265,7 @@ internal sealed class SubscriptionService(
             organizationId,
             subscriptionId,
             subscription => subscription.MarkPastDue(),
+            "past_due",
             cancellationToken);
 
     public Task<SubscriptionSummary?> MarkUnpaidAsync(
@@ -267,6 +276,7 @@ internal sealed class SubscriptionService(
             organizationId,
             subscriptionId,
             subscription => subscription.MarkUnpaid(),
+            "unpaid",
             cancellationToken);
 
     public Task<SubscriptionSummary?> RecoverAsync(
@@ -277,12 +287,14 @@ internal sealed class SubscriptionService(
             organizationId,
             subscriptionId,
             subscription => subscription.Recover(),
+            "recovered",
             cancellationToken);
 
     private async Task<SubscriptionSummary?> TransitionPaymentStateAsync(
         Guid organizationId,
         Guid subscriptionId,
         Action<Subscription> transition,
+        string reason,
         CancellationToken cancellationToken)
     {
         var subscription = await GetTrackedAsync(organizationId, subscriptionId, cancellationToken);
@@ -291,10 +303,14 @@ internal sealed class SubscriptionService(
             return null;
         }
 
+        var price = await RequirePriceAsync(subscription, cancellationToken);
+        var before = ToRevenueState(subscription, price);
         transition(subscription);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            await revenueEventWriter.AppendAsync(
+                CreateRevenueEvent(before, subscription, price, reason), cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -332,6 +348,8 @@ internal sealed class SubscriptionService(
                 return null;
             }
 
+            var price = await RequirePriceAsync(subscription, cancellationToken);
+            var before = ToRevenueState(subscription, price);
             transition(subscription);
             return await PersistMutationAsync(
                 organizationId,
@@ -342,7 +360,8 @@ internal sealed class SubscriptionService(
                 200,
                 null,
                 transaction,
-                cancellationToken);
+                cancellationToken,
+                CreateRevenueEvent(before, subscription, price, operation));
         }
         catch (SubscriptionDomainException)
         {
@@ -394,7 +413,9 @@ internal sealed class SubscriptionService(
         return new PreparedChange(
             new SubscriptionProrationReceipt(ToSummary(subscription), proration),
             newPrice.Id,
-            targetSeatCount);
+            targetSeatCount,
+            currentPrice,
+            newPrice);
     }
 
     private async Task<SubscriptionMutationResult<T>?> FindReplayAsync<T>(
@@ -422,7 +443,8 @@ internal sealed class SubscriptionService(
         int statusCode,
         string? location,
         IDbContextTransaction? transaction,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        SubscriptionRevenueEvent sourceEvent)
     {
         var responseBody = JsonSerializer.Serialize(value, JsonOptions);
         dbContext.IdempotencyRecords.Add(
@@ -433,6 +455,7 @@ internal sealed class SubscriptionService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            await revenueEventWriter.AppendAsync(sourceEvent, cancellationToken);
             await CommitOwnedAsync(transaction, cancellationToken);
             return new SubscriptionMutationResult<T>(value, statusCode, location, false, responseBody);
         }
@@ -619,6 +642,40 @@ internal sealed class SubscriptionService(
             .Where(subscription => subscription.Id == subscriptionId)
             .SingleOrDefaultAsync(cancellationToken);
 
+    private async Task<SubscriptionPrice> RequirePriceAsync(
+        Subscription subscription,
+        CancellationToken cancellationToken) =>
+        await priceReader.GetAsync(
+            subscription.OrganizationId, subscription.PriceId, cancellationToken)
+        ?? throw new InvalidOperationException("The subscription price is missing.");
+
+    private SubscriptionRevenueEvent CreateRevenueEvent(
+        SubscriptionRevenueState? before,
+        Subscription subscription,
+        SubscriptionPrice afterPrice,
+        string reason) =>
+        new(
+            Guid.NewGuid(), subscription.OrganizationId, subscription.Id, reason,
+            clock.Now.ToUniversalTime(), before, ToRevenueState(subscription, afterPrice));
+
+    private static SubscriptionRevenueState ToRevenueState(
+        Subscription subscription,
+        SubscriptionPrice price) =>
+        new(
+            subscription.Status.ToString(),
+            subscription.PriceId,
+            subscription.SeatCount,
+            subscription.Version,
+            new RevenuePriceTerms(
+                price.Id,
+                price.Version,
+                price.Currency,
+                price.PricingModel,
+                price.BillingInterval,
+                price.FlatUnitAmountCents,
+                price.PerSeatUnitAmountCents,
+                price.Tiers));
+
     private static SubscriptionSummary ToSummary(Subscription subscription) =>
         new(
             subscription.Id, subscription.OrganizationId, subscription.CustomerId,
@@ -636,5 +693,7 @@ internal sealed class SubscriptionService(
     private sealed record PreparedChange(
         SubscriptionProrationReceipt Receipt,
         Guid NewPriceId,
-        int? NewSeatCount);
+        int? NewSeatCount,
+        SubscriptionPrice CurrentPrice,
+        SubscriptionPrice NewPrice);
 }

@@ -241,5 +241,6 @@ internal sealed class PriceService(CatalogDbContext dbContext) : IPriceService
                     tier.EndingUnit,
                     tier.UnitAmountCents))
                 .ToList(),
-            price.TrialDays);
+            price.TrialDays,
+            price.Version);
 }

@@ -31,6 +31,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
                 .HasConversion<string>()
                 .HasMaxLength(32);
             builder.Property(price => price.Currency).HasMaxLength(3);
+            builder.Property(price => price.Version).IsConcurrencyToken().ValueGeneratedNever();
             builder.Property(price => price.BillingInterval)
                 .HasConversion<string>()
                 .HasMaxLength(16);

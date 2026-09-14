@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Domain\BillingPlatform.Payments.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Application\BillingPlatform.Webhooks.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Infrastructure\BillingPlatform.Webhooks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\BillingPlatform.Reporting.Domain\BillingPlatform.Reporting.Domain.csproj" />
   </ItemGroup>
 
 </Project>

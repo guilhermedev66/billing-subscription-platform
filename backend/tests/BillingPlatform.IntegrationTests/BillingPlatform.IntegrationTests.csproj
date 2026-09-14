@@ -27,6 +27,9 @@
     <ProjectReference Include="..\..\src\Modules\Payments\BillingPlatform.Payments.Infrastructure\BillingPlatform.Payments.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Application\BillingPlatform.Webhooks.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Webhooks\BillingPlatform.Webhooks.Infrastructure\BillingPlatform.Webhooks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\BillingPlatform.Reporting.Application\BillingPlatform.Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\BillingPlatform.Reporting.Domain\BillingPlatform.Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\BillingPlatform.Reporting.Infrastructure\BillingPlatform.Reporting.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

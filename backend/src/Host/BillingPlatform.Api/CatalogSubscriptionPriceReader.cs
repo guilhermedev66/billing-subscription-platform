@@ -31,6 +31,7 @@ internal sealed class CatalogSubscriptionPriceReader(IPriceService priceService)
                         tier.EndingUnit,
                         tier.UnitAmountCents))
                     .ToList(),
-                price.TrialDays);
+                price.TrialDays,
+                price.Version);
     }
 }

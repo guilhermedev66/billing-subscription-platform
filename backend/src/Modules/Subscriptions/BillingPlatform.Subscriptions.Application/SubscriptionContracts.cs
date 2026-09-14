@@ -117,7 +117,8 @@ public sealed record SubscriptionPrice(
     long? PerSeatUnitAmountCents,
     long? MeteredUnitAmountCents,
     IReadOnlyList<SubscriptionPriceTier> Tiers,
-    int? TrialDays);
+    int? TrialDays,
+    int Version = 1);
 
 public sealed record SubscriptionPriceTier(
     int StartingUnit,

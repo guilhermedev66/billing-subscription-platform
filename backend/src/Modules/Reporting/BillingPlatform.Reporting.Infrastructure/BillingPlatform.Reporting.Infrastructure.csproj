@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\..\Catalog\BillingPlatform.Catalog.Application\BillingPlatform.Catalog.Application.csproj" />
+    <ProjectReference Include="..\..\Subscriptions\BillingPlatform.Subscriptions.Application\BillingPlatform.Subscriptions.Application.csproj" />
+    <ProjectReference Include="..\..\SimulationClock\BillingPlatform.SimulationClock.Application\BillingPlatform.SimulationClock.Application.csproj" />
     <ProjectReference Include="..\BillingPlatform.Reporting.Application\BillingPlatform.Reporting.Application.csproj" />
     <ProjectReference Include="..\BillingPlatform.Reporting.Domain\BillingPlatform.Reporting.Domain.csproj" />
   </ItemGroup>

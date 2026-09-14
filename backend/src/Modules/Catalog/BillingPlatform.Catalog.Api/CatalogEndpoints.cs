@@ -217,7 +217,7 @@ public static class CatalogEndpoints
         Guid priceId,
         PriceRequest request,
         ClaimsPrincipal principal,
-        IPriceService priceService,
+        IPriceMutationCoordinator priceMutationCoordinator,
         CancellationToken cancellationToken)
     {
         if (!TryGetOrganizationId(principal, out var organizationId))
@@ -227,7 +227,7 @@ public static class CatalogEndpoints
 
         try
         {
-            var price = await priceService.UpdateAsync(
+            var price = await priceMutationCoordinator.UpdateAsync(
                 organizationId,
                 priceId,
                 ToUpdatePriceCommand(request),
@@ -242,6 +242,10 @@ public static class CatalogEndpoints
         catch (ArgumentException exception)
         {
             return ValidationError(exception);
+        }
+        catch (PriceConcurrencyException)
+        {
+            return Results.Conflict(new { error = "The price was modified by another request." });
         }
     }
 

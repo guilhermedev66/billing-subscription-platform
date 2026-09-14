@@ -6,6 +6,7 @@ using BillingPlatform.Organizations.Infrastructure.Persistence;
 using BillingPlatform.Subscriptions.Infrastructure.Persistence;
 using BillingPlatform.Payments.Infrastructure.Persistence;
 using BillingPlatform.Webhooks.Infrastructure.Persistence;
+using BillingPlatform.Reporting.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace BillingPlatform.Api;
@@ -46,5 +47,9 @@ internal static class DatabaseInitializer
         var webhooksDbContext =
             scope.ServiceProvider.GetRequiredService<WebhooksDbContext>();
         await webhooksDbContext.Database.MigrateAsync();
+
+        var reportingDbContext =
+            scope.ServiceProvider.GetRequiredService<ReportingDbContext>();
+        await reportingDbContext.Database.MigrateAsync();
     }
 }

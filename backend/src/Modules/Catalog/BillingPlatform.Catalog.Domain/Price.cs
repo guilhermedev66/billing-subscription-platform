@@ -34,6 +34,7 @@ public sealed class Price
         MeteredAggregation = meteredAggregation;
         this.tiers.AddRange(pricingTiers);
         TrialDays = trialDays;
+        Version = 1;
     }
 
     public Guid Id { get; private set; }
@@ -59,6 +60,8 @@ public sealed class Price
     public IReadOnlyCollection<PricingTier> Tiers => tiers.AsReadOnly();
 
     public int? TrialDays { get; private set; }
+
+    public int Version { get; private set; }
 
     public static Price Create(
         Guid id,
@@ -138,6 +141,7 @@ public sealed class Price
         tiers.Clear();
         tiers.AddRange(normalizedTiers);
         TrialDays = trialDays;
+        checked { Version++; }
     }
 
     private static void Validate(
