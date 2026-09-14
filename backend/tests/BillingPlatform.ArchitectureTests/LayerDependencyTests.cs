@@ -14,7 +14,8 @@ public sealed class LayerDependencyTests
         typeof(Subscriptions.Domain.AssemblyMarker).Assembly,
         typeof(Billing.Domain.AssemblyMarker).Assembly,
         typeof(Payments.Domain.AssemblyMarker).Assembly,
-        typeof(Webhooks.Domain.AssemblyMarker).Assembly
+        typeof(Webhooks.Domain.AssemblyMarker).Assembly,
+        typeof(Reporting.Domain.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] ApplicationAssemblies =
@@ -27,7 +28,8 @@ public sealed class LayerDependencyTests
         typeof(Subscriptions.Application.AssemblyMarker).Assembly,
         typeof(Billing.Application.AssemblyMarker).Assembly,
         typeof(Payments.Application.AssemblyMarker).Assembly,
-        typeof(Webhooks.Application.AssemblyMarker).Assembly
+        typeof(Webhooks.Application.AssemblyMarker).Assembly,
+        typeof(Reporting.Application.AssemblyMarker).Assembly
     ];
 
     private static readonly Assembly[] InfrastructureAssemblies =
@@ -40,7 +42,8 @@ public sealed class LayerDependencyTests
         typeof(Subscriptions.Infrastructure.AssemblyMarker).Assembly,
         typeof(Billing.Infrastructure.AssemblyMarker).Assembly,
         typeof(Payments.Infrastructure.AssemblyMarker).Assembly,
-        typeof(Webhooks.Infrastructure.AssemblyMarker).Assembly
+        typeof(Webhooks.Infrastructure.AssemblyMarker).Assembly,
+        typeof(Reporting.Infrastructure.AssemblyMarker).Assembly
     ];
 
     [Fact]
