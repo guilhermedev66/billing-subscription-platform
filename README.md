@@ -89,9 +89,28 @@ portfolio demo — not oversights:
 - The demo-dataset seeder is not concurrency-safe (two simultaneous "Seed
   Demo Dataset" clicks can create duplicate catalog rows) — internal demo
   tooling, not a financial-correctness path.
+- A session is pinned to its earliest organization membership; there's no
+  tenant-switching endpoint for a second org created from the same account.
+  Single-org-per-session is the intended shape for a single-operator demo.
+
+## Deployment
+
+A `render.yaml` Blueprint at the repo root defines the API (Docker web
+service, health-checked at `/health/ready`) and a managed Postgres database.
+Everything short of the account itself is ready — importing the Blueprint
+into Render.com and setting the deployed frontend's URL as
+`Cors__AllowedOrigins__0` in the Render dashboard are the two steps only the
+project owner can do. The blueprint defaults to Render's free tier for both
+services; consider the Starter tier (~$14/mo total) before a live demo —
+free-tier services sleep after 15 minutes idle, which would reset the
+in-memory virtual clock and stop the background webhook dispatcher
+mid-session.
 
 ## Status
 
 M1–M6 (all planned milestones, including the M6 analytics stretch goal) are
-complete and CI-green. See `docs/ROADMAP.md` for what's still open before
-final portfolio freeze (security review, deploy, production smoke test).
+complete and CI-green, including a full security review pass and a
+production smoke test that boots the real Docker Compose stack and exercises
+an authenticated flow end-to-end in CI. See `docs/ROADMAP.md` for full
+milestone history. What's left before portfolio freeze: the actual Render
+deploy (blocked on the project owner's account, see Deployment above).
