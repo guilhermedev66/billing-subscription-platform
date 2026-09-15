@@ -89,7 +89,11 @@ try
         service = "BillingPlatform.Api",
         status = "running"
     }));
-    app.MapOpenApi();
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+    }
+
     app.MapPlatformHealthChecks();
     app.MapIdentityEndpoints();
     app.MapOrganizationEndpoints();
