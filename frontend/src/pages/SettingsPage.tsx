@@ -6,8 +6,7 @@ export function SettingsPage() {
     <ModulePlaceholder
       title="Settings"
       icon={Settings}
-      milestone="M5"
-      description="Organization settings (currency, invoice numbering, API keys) and the simulation console."
+      description="Organization settings such as currency, invoice numbering, and API keys were never an explicit roadmap deliverable — see the README for what's implemented."
     />
   )
 }
