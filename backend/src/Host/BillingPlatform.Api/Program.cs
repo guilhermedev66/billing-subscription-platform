@@ -31,6 +31,9 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+    PostgresConnectionString.Normalize(builder.Configuration);
+
     builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         loggerConfiguration
             .ReadFrom.Configuration(context.Configuration)
@@ -67,6 +70,12 @@ try
 
     var app = builder.Build();
 
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHsts();
+    }
+
+    app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseExceptionHandler();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseSerilogRequestLogging();

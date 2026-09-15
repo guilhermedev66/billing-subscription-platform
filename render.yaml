@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: billing-platform-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__BillingPlatform
+        fromDatabase:
+          name: billing-platform-postgres
+          property: connectionString
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Cors__AllowedOrigins__0
+        sync: false
+
+databases:
+  - name: billing-platform-postgres
+    databaseName: billing_platform
+    user: billing_platform
+    plan: free
