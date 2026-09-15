@@ -21,6 +21,7 @@ using BillingPlatform.Webhooks.Infrastructure;
 using BillingPlatform.Reporting.Api;
 using BillingPlatform.Reporting.Infrastructure;
 using BillingPlatform.Catalog.Application;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -67,8 +68,23 @@ try
     builder.Services.AddPlatformObservability(builder.Configuration, builder.Environment);
     builder.Services.AddPlatformHealthChecks(builder.Configuration);
     builder.Services.AddFrontendCors(builder.Configuration);
+    // Render terminates TLS at its edge and forwards plain HTTP to this container, so without
+    // this, Request.IsHttps (and therefore UseHsts()) is always false in production. Render's
+    // proxy isn't a fixed, allowlistable IP the way a private network's would be, so
+    // KnownNetworks/KnownProxies (which default to trusting only loopback) are cleared to trust
+    // the proxy's X-Forwarded-* headers unconditionally. That is only safe because Render's edge
+    // is this API's sole ingress; if it ever became reachable any other way, this would need a
+    // real trusted-proxy allowlist instead.
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
 
     var app = builder.Build();
+
+    app.UseForwardedHeaders();
 
     if (!app.Environment.IsDevelopment())
     {
