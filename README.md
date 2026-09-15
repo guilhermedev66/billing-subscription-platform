@@ -93,24 +93,37 @@ portfolio demo — not oversights:
   tenant-switching endpoint for a second org created from the same account.
   Single-org-per-session is the intended shape for a single-operator demo.
 
-## Deployment
+## Live demo
 
-A `render.yaml` Blueprint at the repo root defines the API (Docker web
-service, health-checked at `/health/ready`) and a managed Postgres database.
-Everything short of the account itself is ready — importing the Blueprint
-into Render.com and setting the deployed frontend's URL as
-`Cors__AllowedOrigins__0` in the Render dashboard are the two steps only the
-project owner can do. The blueprint defaults to Render's free tier for both
-services; consider the Starter tier (~$14/mo total) before a live demo —
-free-tier services sleep after 15 minutes idle, which would reset the
-in-memory virtual clock and stop the background webhook dispatcher
-mid-session.
+- **App:** https://frontend-fawn-beta-42.vercel.app
+- **API:** https://billing-platform-api-57i7.onrender.com (`/health/ready`, `/health/live`)
+
+Deployed on Render (API, Docker, free tier — `render.yaml` at the repo root)
++ Neon (Postgres, serverless) + Vercel (frontend static site). The API's
+`Cors__AllowedOrigins__0` and `ConnectionStrings__BillingPlatform` are set
+directly on the Render service rather than synced from `render.yaml`, since
+the database is Neon-hosted, not a Render-managed Postgres instance.
+
+Free-tier services sleep after 15 minutes idle; the first request after a
+period of inactivity may take 30-60s to wake the API (Render) and, less
+commonly, the frontend (Vercel serves it from its CDN and rarely cold-starts,
+but the API behind it can). A sleeping API also loses its in-memory virtual
+clock offset and background webhook dispatcher state on wake — both resume
+correctly, just reset to their defaults. Consider Render's Starter tier
+(~$14/mo total) to remove this for an active demo period.
+
+**Operational note:** changing a Render service's environment variables via
+the API/dashboard does **not** take effect on `restart` — only a fresh
+`deploys create` (redeploy) re-injects the updated environment into the
+container. Learned the hard way wiring CORS during this deployment: a
+`restart` after an env var change left the old value in place.
 
 ## Status
 
 M1–M6 (all planned milestones, including the M6 analytics stretch goal) are
 complete and CI-green, including a full security review pass and a
 production smoke test that boots the real Docker Compose stack and exercises
-an authenticated flow end-to-end in CI. See `docs/ROADMAP.md` for full
-milestone history. What's left before portfolio freeze: the actual Render
-deploy (blocked on the project owner's account, see Deployment above).
+an authenticated flow end-to-end in CI. **Deployed and verified live** (see
+Live demo above) — register/login/authenticated-call and CORS all confirmed
+working against the real production stack, not just CI. See
+`docs/ROADMAP.md` for full milestone history.

@@ -1,3 +1,8 @@
+# Live deployment: Render (this API service) + Neon (Postgres) + Vercel (frontend static
+# site — not defined here, Vercel manages its own project config independently).
+# ConnectionStrings__BillingPlatform and Cors__AllowedOrigins__0 are set directly on the
+# Render service (dashboard or API), not synced from this file, since the database lives
+# on Neon rather than a Render-managed Postgres instance.
 services:
   - type: web
     name: billing-platform-api
@@ -10,16 +15,8 @@ services:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ConnectionStrings__BillingPlatform
-        fromDatabase:
-          name: billing-platform-postgres
-          property: connectionString
+        sync: false
       - key: Jwt__SigningKey
         generateValue: true
       - key: Cors__AllowedOrigins__0
         sync: false
-
-databases:
-  - name: billing-platform-postgres
-    databaseName: billing_platform
-    user: billing_platform
-    plan: free
