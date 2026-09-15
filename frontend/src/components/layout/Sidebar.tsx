@@ -4,6 +4,9 @@ import { X, Zap } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { navItems } from './nav'
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 interface SidebarProps {
   open: boolean
   onClose: () => void
@@ -11,6 +14,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onClose, triggerRef }: SidebarProps) {
+  const panelRef = useRef<HTMLElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const wasOpen = useRef(false)
 
@@ -23,10 +27,34 @@ export function Sidebar({ open, onClose, triggerRef }: SidebarProps) {
     wasOpen.current = open
   }, [open, triggerRef])
 
+  // Below `lg` this drawer renders as a modal-style overlay (backdrop + fixed panel), so it
+  // needs the same Tab-trap Modal/Sheet use — otherwise a keyboard user can tab straight past
+  // the nav links into the topbar/page content sitting behind the backdrop. `lg:static` means
+  // the sidebar is normal in-flow content at that breakpoint instead, but `open` (and this trap)
+  // is never true there in practice — the trigger button that sets it is itself `lg:hidden`.
   useEffect(() => {
     if (!open) return
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return
+
+      const focusable = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -42,6 +70,7 @@ export function Sidebar({ open, onClose, triggerRef }: SidebarProps) {
         />
       )}
       <aside
+        ref={panelRef}
         className={cn(
           'fixed inset-y-0 left-0 z-40 flex w-60 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-150 ease-out',
           open ? 'translate-x-0' : '-translate-x-full',
