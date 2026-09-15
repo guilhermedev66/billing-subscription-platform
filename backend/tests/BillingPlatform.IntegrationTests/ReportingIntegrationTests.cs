@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using BillingPlatform.Catalog.Application;
 using BillingPlatform.Reporting.Application;
 using BillingPlatform.Reporting.Infrastructure.Persistence;
 using BillingPlatform.Subscriptions.Application;
@@ -131,6 +132,91 @@ public sealed class ReportingIntegrationTests(PostgreSqlFixture database)
         var rebuilt = Assert.Single(await reporting.WaterfallAsync(
             owner.User.OrganizationId, now.AddMinutes(-1), now.AddMinutes(3)));
         Assert.Equal(0L, rebuilt.EndingArrCents);
+    }
+
+    [Fact]
+    public async Task Stale_transition_after_price_mutation_does_not_double_count_the_price_delta()
+    {
+        await using var factory = database.CreateFactory();
+        using var client = factory.CreateClient();
+        var owner = await ApiTestClient.RegisterAsync(
+            client, "Stale price reporting", ApiTestClient.UniqueEmail("reporting-stale-price"));
+        await using var scope = factory.Services.CreateAsyncScope();
+        var subscriptionWriter = scope.ServiceProvider
+            .GetRequiredService<ISubscriptionRevenueEventWriter>();
+        var priceWriter = scope.ServiceProvider.GetRequiredService<IPriceMutationEventWriter>();
+        var reporting = scope.ServiceProvider.GetRequiredService<IReportingService>();
+        var now = scope.ServiceProvider.GetRequiredService<IVirtualClock>().Now;
+        var priceId = Guid.NewGuid();
+        var subscriptionId = Guid.NewGuid();
+        var priceV1 = new RevenuePriceTerms(
+            priceId, 1, "USD", "Flat", "Month", 1000, null, []);
+        var catalogPriceV1 = new CatalogPriceTerms(
+            priceId, 1, "USD", "Flat", "Month", 1000, null, []);
+        var catalogPriceV2 = new CatalogPriceTerms(
+            priceId, 2, "USD", "Flat", "Month", 1500, null, []);
+        var activeV1 = new SubscriptionRevenueState(
+            "Active", priceId, null, 1, priceV1);
+        var pastDueV2WithStalePrice = new SubscriptionRevenueState(
+            "PastDue", priceId, null, 2, priceV1);
+        var createdEventId = Guid.NewGuid();
+        var priceEventId = Guid.NewGuid();
+        var transitionEventId = Guid.NewGuid();
+
+        await subscriptionWriter.AppendAsync(new SubscriptionRevenueEvent(
+            createdEventId, owner.User.OrganizationId, subscriptionId, "created",
+            now, null, activeV1));
+        await priceWriter.AppendAsync(new CatalogPriceMutationEvent(
+            priceEventId, owner.User.OrganizationId, priceId, now.AddMinutes(1),
+            catalogPriceV1, catalogPriceV2));
+        // This transition began while v1 was current, but its reporting fact arrived only after
+        // the price mutation had already revalued the subscription snapshot to v2.
+        await subscriptionWriter.AppendAsync(new SubscriptionRevenueEvent(
+            transitionEventId, owner.User.OrganizationId, subscriptionId, "past_due",
+            now.AddMinutes(2), activeV1, pastDueV2WithStalePrice));
+
+        var current = Assert.Single(await reporting.CurrentAsync(owner.User.OrganizationId));
+        Assert.Equal(18_000L, current.ArrCents);
+        Assert.Equal(18_000L, current.AtRiskArrCents);
+        await AssertReconciledMovementsAsync();
+
+        await reporting.RebuildAsync(owner.User.OrganizationId);
+
+        current = Assert.Single(await reporting.CurrentAsync(owner.User.OrganizationId));
+        Assert.Equal(18_000L, current.ArrCents);
+        Assert.Equal(18_000L, current.AtRiskArrCents);
+        await AssertReconciledMovementsAsync();
+
+        async Task AssertReconciledMovementsAsync()
+        {
+            await using var verificationScope = factory.Services.CreateAsyncScope();
+            var db = verificationScope.ServiceProvider.GetRequiredService<ReportingDbContext>();
+            var movements = await db.MrrMovements.AsNoTracking()
+                .Where(item => item.OrganizationId == owner.User.OrganizationId)
+                .OrderBy(item => item.OccurredAt)
+                .ToListAsync();
+            Assert.Collection(movements,
+                movement =>
+                {
+                    Assert.Equal(createdEventId, movement.SourceEventId);
+                    Assert.Equal(0L, movement.BeforeAnnualizedCents);
+                    Assert.Equal(12_000L, movement.AfterAnnualizedCents);
+                },
+                movement =>
+                {
+                    Assert.Equal(priceEventId, movement.SourceEventId);
+                    Assert.Equal(12_000L, movement.BeforeAnnualizedCents);
+                    Assert.Equal(18_000L, movement.AfterAnnualizedCents);
+                });
+            Assert.DoesNotContain(movements, movement =>
+                movement.SourceEventId == transitionEventId);
+
+            var waterfall = Assert.Single(await reporting.WaterfallAsync(
+                owner.User.OrganizationId, now.AddMinutes(-1), now.AddMinutes(3)));
+            Assert.Equal(12_000L, waterfall.NewArrCents);
+            Assert.Equal(6_000L, waterfall.ExpansionArrCents);
+            Assert.Equal(18_000L, waterfall.EndingArrCents);
+        }
     }
 
     [Fact]

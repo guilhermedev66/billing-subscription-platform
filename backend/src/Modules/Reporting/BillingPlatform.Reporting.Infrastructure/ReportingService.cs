@@ -193,9 +193,21 @@ internal sealed class ReportingService(ReportingDbContext dbContext, IVirtualClo
         // must drive this movement, even when a version gap means `previous` (the replay cache)
         // reflects a different, non-adjacent transition. Trusting `previous` here double-counted
         // or dropped delta across an out-of-order gap (QA finding, ingest order v1,v3,v2).
+        // But Before can itself be stale: the transition may have been computed before a Catalog
+        // price mutation that has since revalued the live snapshot. Applying the same
+        // already-applied-mutation supersession check used for After above keeps a stale Before
+        // from being diffed against an already-revalued After, which would double-count the price
+        // mutation's own delta (already recorded as its own movement by ApplyPrice).
+        var beforePrice = fact.Before is null ? null : ToPrice(fact.Before.Price);
+        if (fact.Before is not null && beforePrice is not null &&
+            latestPrices.TryGetValue(fact.Before.PriceId, out var latestBeforePrice) &&
+            latestBeforePrice.PriceVersion > beforePrice.Version)
+        {
+            beforePrice = ToPrice(latestBeforePrice);
+        }
         var beforeAmount = fact.Before is null ? 0 : RevenueCalculation.AnnualizedFixedCents(
-            fact.Before.Status.ToString(), fact.Before.SeatCount, ToPrice(fact.Before.Price));
-        var beforeCurrency = fact.Before?.Price.Currency ?? afterPrice.Currency;
+            fact.Before.Status.ToString(), fact.Before.SeatCount, beforePrice!);
+        var beforeCurrency = beforePrice?.Currency ?? afterPrice.Currency;
         var everRevenueBearing = previous?.EverRevenueBearing == true ||
             (fact.Before is not null && beforeAmount > 0);
         AddMovement(source, fact.SubscriptionId, beforeCurrency, afterPrice.Currency,
