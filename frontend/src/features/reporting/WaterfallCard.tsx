@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { billingStatusTokens } from '@/components/ui/StatusBadge'
 import { cn } from '@/lib/cn'
 import { formatCents } from '@/lib/money'
 import type { WaterfallTotals } from './types'
@@ -12,18 +13,19 @@ interface WaterfallRow {
 
 /**
  * Four categories only, matching the approved M6 UX research exactly (New =
- * emerald, Expansion = sky, Contraction = amber, Churn = rose) — the backend
- * also reports `reactivationMrrCents`, but that's real revenue movement with
- * no bar here by design, not hidden data: it still flows into Net Movement
- * via `netMrrDeltaCents`, which is not re-derived from these four rows (see
- * that function's comment).
+ * success, Expansion = info, Contraction = warning, Churn = destructive,
+ * reusing the existing billingStatusTokens dots rather than restating raw
+ * Tailwind classes) — the backend also reports `reactivationMrrCents`, but
+ * that's real revenue movement with no bar here by design, not hidden data:
+ * it still flows into Net Movement via `netMrrDeltaCents`, which is not
+ * re-derived from these four rows (see that function's comment).
  */
 function rowsFor(totals: WaterfallTotals): WaterfallRow[] {
   return [
-    { label: 'New MRR', deltaCents: totals.newMrrCents, barClassName: 'bg-emerald-500' },
-    { label: 'Expansion MRR', deltaCents: totals.expansionMrrCents, barClassName: 'bg-sky-500' },
-    { label: 'Contraction MRR', deltaCents: -totals.contractionMrrCents, barClassName: 'bg-amber-500' },
-    { label: 'Churned MRR', deltaCents: -totals.churnMrrCents, barClassName: 'bg-rose-500' },
+    { label: 'New MRR', deltaCents: totals.newMrrCents, barClassName: billingStatusTokens.success.dot },
+    { label: 'Expansion MRR', deltaCents: totals.expansionMrrCents, barClassName: billingStatusTokens.info.dot },
+    { label: 'Contraction MRR', deltaCents: -totals.contractionMrrCents, barClassName: billingStatusTokens.warning.dot },
+    { label: 'Churned MRR', deltaCents: -totals.churnMrrCents, barClassName: billingStatusTokens.destructive.dot },
   ]
 }
 
@@ -63,7 +65,7 @@ export function WaterfallCard({ totals, currencyLabel }: WaterfallCardProps) {
                 {signedFormat(row.deltaCents, totals.currency)}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted" aria-hidden="true">
               <div
                 className={cn('h-full rounded-full', row.barClassName)}
                 style={{ width: `${(Math.abs(row.deltaCents) / maxAbsDelta) * 100}%` }}
