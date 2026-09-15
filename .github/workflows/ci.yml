@@ -86,3 +86,34 @@ jobs:
           tags: billing-platform-web:ci
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
+
+  smoke:
+    name: Container production smoke test
+    needs: docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate disposable credentials
+        shell: bash
+        run: |
+          postgres_password="$(openssl rand -hex 32)"
+          jwt_signing_key="$(openssl rand -base64 48 | tr -d '\n')"
+          echo "::add-mask::$postgres_password"
+          echo "::add-mask::$jwt_signing_key"
+          printf 'POSTGRES_PASSWORD=%s\n' "$postgres_password" >> "$GITHUB_ENV"
+          printf 'JWT_SIGNING_KEY=%s\n' "$jwt_signing_key" >> "$GITHUB_ENV"
+
+      - name: Start production stack
+        run: docker compose up --build --detach
+
+      - name: Exercise production stack
+        run: ./scripts/smoke-test.sh
+
+      - name: Show container logs on failure
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+
+      - name: Tear down production stack
+        if: ${{ always() }}
+        run: docker compose down --volumes --remove-orphans
