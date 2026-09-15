@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, LayoutDashboard, RefreshCw } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
+import { SignedAmount } from '@/components/ui/SignedAmount'
 import { CardSkeleton, CardSkeletonGrid } from '@/components/ui/Skeleton'
 import { listInvoices } from '@/features/invoices/api'
 import { byUrgency, isAtRisk } from '@/features/invoices/atRisk'
@@ -23,13 +24,9 @@ import { useNow } from '@/lib/useNow'
 const DAY_MS = 24 * 60 * 60 * 1000
 const WATERFALL_WINDOW_DAYS = 30
 
-function formatSigned(cents: number, currency: string): string {
-  return `${cents > 0 ? '+' : ''}${formatCents(cents, currency)}`
-}
-
 interface KpiCardProps {
   label: string
-  value: string
+  value: ReactNode
   hint?: string
   valueClassName?: string
 }
@@ -49,11 +46,13 @@ function KpiCard({ label, value, hint, valueClassName }: KpiCardProps) {
 }
 
 function NetGrowthKpi({
+  currency,
   totals,
   isPending,
   isError,
   onRetry,
 }: {
+  currency: string
   totals: WaterfallTotals | undefined
   isPending: boolean
   isError: boolean
@@ -64,7 +63,12 @@ function NetGrowthKpi({
       <Card>
         <CardContent className="flex flex-col gap-1 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Net MRR Growth (30d)</p>
-          <button type="button" onClick={onRetry} className="text-left text-sm text-rose-600 dark:text-rose-400">
+          <button
+            type="button"
+            onClick={onRetry}
+            aria-label={`Retry loading Net MRR Growth for ${currency}`}
+            className="text-left text-sm text-rose-600 dark:text-rose-400"
+          >
             Couldn't load — retry
           </button>
         </CardContent>
@@ -80,7 +84,7 @@ function NetGrowthKpi({
   return (
     <KpiCard
       label="Net MRR Growth (30d)"
-      value={formatSigned(net, totals.currency)}
+      value={<SignedAmount cents={net} currency={totals.currency} />}
       valueClassName={cn(net > 0 && 'text-emerald-600 dark:text-emerald-400', net < 0 && 'text-rose-600 dark:text-rose-400')}
       hint={`New ${formatCents(totals.newMrrCents, totals.currency)} · Churn -${formatCents(totals.churnMrrCents, totals.currency)}`}
     />
@@ -221,6 +225,7 @@ export function DashboardPage() {
                   />
                 )}
                 <NetGrowthKpi
+                  currency={entry.currency}
                   totals={waterfallByCurrency.get(entry.currency)}
                   isPending={waterfallPending}
                   isError={waterfallError}

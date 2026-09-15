@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { SignedAmount } from '@/components/ui/SignedAmount'
 import { billingStatusTokens } from '@/components/ui/StatusBadge'
 import { cn } from '@/lib/cn'
-import { formatCents } from '@/lib/money'
 import type { WaterfallTotals } from './types'
 import { netMrrDeltaCents } from './waterfallMath'
 
@@ -29,10 +29,6 @@ function rowsFor(totals: WaterfallTotals): WaterfallRow[] {
   ]
 }
 
-function signedFormat(cents: number, currency: string): string {
-  return `${cents > 0 ? '+' : ''}${formatCents(cents, currency)}`
-}
-
 interface WaterfallCardProps {
   totals: WaterfallTotals
   /** Shown in the card title when the org has more than one active currency. */
@@ -47,7 +43,7 @@ export function WaterfallCard({ totals, currencyLabel }: WaterfallCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>MRR Waterfall (Last 30 Days){currencyLabel ? ` · ${currencyLabel}` : ''}</CardTitle>
+        <CardTitle as="h2">MRR Waterfall (Last 30 Days){currencyLabel ? ` · ${currencyLabel}` : ''}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {rows.map((row) => (
@@ -62,7 +58,7 @@ export function WaterfallCard({ totals, currencyLabel }: WaterfallCardProps) {
                   row.deltaCents === 0 && 'text-muted-foreground',
                 )}
               >
-                {signedFormat(row.deltaCents, totals.currency)}
+                <SignedAmount cents={row.deltaCents} currency={totals.currency} />
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted" aria-hidden="true">
@@ -84,7 +80,7 @@ export function WaterfallCard({ totals, currencyLabel }: WaterfallCardProps) {
               netCents === 0 && 'text-foreground',
             )}
           >
-            {signedFormat(netCents, totals.currency)}
+            <SignedAmount cents={netCents} currency={totals.currency} />
           </span>
         </div>
       </CardContent>
