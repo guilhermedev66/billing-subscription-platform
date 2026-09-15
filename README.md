@@ -112,11 +112,10 @@ clock offset and background webhook dispatcher state on wake — both resume
 correctly, just reset to their defaults. Consider Render's Starter tier
 (~$14/mo total) to remove this for an active demo period.
 
-**Operational note:** changing a Render service's environment variables via
-the API/dashboard does **not** take effect on `restart` — only a fresh
-`deploys create` (redeploy) re-injects the updated environment into the
-container. Learned the hard way wiring CORS during this deployment: a
-`restart` after an env var change left the old value in place.
+**Operational notes, learned the hard way wiring this up:**
+- Changing a Render service's environment variables via the API/dashboard does **not** take effect on `restart` — only a fresh `deploys create` (redeploy) re-injects the updated environment into the container.
+- The Vercel project's Root Directory must be set explicitly (`frontend`) for its GitHub auto-deploy to work — without it, Vercel clones the whole monorepo but never `cd`s into `frontend/` first, so its dependency-install step silently never runs and every auto-deploy fails (`vite: command not found`). `VITE_API_URL`/`VITE_API_MOCKING` are set as persistent Vercel project environment variables for the same reason — a one-off CLI flag doesn't help a build Vercel triggers itself.
+- Vercel's static hosting needs an explicit SPA fallback (`frontend/vercel.json`); without it, any direct navigation to a client-side route (a bookmark, a refresh, a shared link) 404s. The Docker/nginx deployment already has the equivalent (`nginx.conf`'s `try_files ... /index.html`).
 
 ## Status
 
