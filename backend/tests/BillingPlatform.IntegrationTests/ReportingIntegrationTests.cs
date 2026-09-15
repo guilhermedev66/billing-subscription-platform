@@ -74,18 +74,49 @@ public sealed class ReportingIntegrationTests(PostgreSqlFixture database)
         var v1After = new SubscriptionRevenueState("Active", price100.PriceId, null, 1, price100);
         var v2After = new SubscriptionRevenueState("Active", price200.PriceId, null, 2, price200);
         var v3After = new SubscriptionRevenueState("Canceled", price200.PriceId, null, 3, price200);
+        var v1EventId = Guid.NewGuid();
+        var v3EventId = Guid.NewGuid();
+        var v2EventId = Guid.NewGuid();
 
         // Ingest order v1, v3, v2 — v2 (the true chronological middle event) arrives last,
         // leaving a version gap (1 then 3) at the time v3 is applied.
         await writer.AppendAsync(new SubscriptionRevenueEvent(
-            Guid.NewGuid(), owner.User.OrganizationId, subscriptionId, "created",
+            v1EventId, owner.User.OrganizationId, subscriptionId, "created",
             now, null, v1After));
         await writer.AppendAsync(new SubscriptionRevenueEvent(
-            Guid.NewGuid(), owner.User.OrganizationId, subscriptionId, "canceled",
+            v3EventId, owner.User.OrganizationId, subscriptionId, "canceled",
             now.AddMinutes(2), v2After, v3After));
         await writer.AppendAsync(new SubscriptionRevenueEvent(
-            Guid.NewGuid(), owner.User.OrganizationId, subscriptionId, "changed",
+            v2EventId, owner.User.OrganizationId, subscriptionId, "changed",
             now.AddMinutes(1), v1After, v2After));
+
+        await using (var verificationScope = factory.Services.CreateAsyncScope())
+        {
+            var db = verificationScope.ServiceProvider.GetRequiredService<ReportingDbContext>();
+            var movements = await db.MrrMovements.AsNoTracking()
+                .Where(item => item.OrganizationId == owner.User.OrganizationId)
+                .OrderBy(item => item.OccurredAt)
+                .ToListAsync();
+            Assert.Collection(movements,
+                movement =>
+                {
+                    Assert.Equal(v1EventId, movement.SourceEventId);
+                    Assert.Equal(0L, movement.BeforeAnnualizedCents);
+                    Assert.Equal(100L, movement.AfterAnnualizedCents);
+                },
+                movement =>
+                {
+                    Assert.Equal(v2EventId, movement.SourceEventId);
+                    Assert.Equal(100L, movement.BeforeAnnualizedCents);
+                    Assert.Equal(200L, movement.AfterAnnualizedCents);
+                },
+                movement =>
+                {
+                    Assert.Equal(v3EventId, movement.SourceEventId);
+                    Assert.Equal(200L, movement.BeforeAnnualizedCents);
+                    Assert.Equal(0L, movement.AfterAnnualizedCents);
+                });
+        }
 
         var waterfall = Assert.Single(await reporting.WaterfallAsync(
             owner.User.OrganizationId, now.AddMinutes(-1), now.AddMinutes(3)));
@@ -100,6 +131,41 @@ public sealed class ReportingIntegrationTests(PostgreSqlFixture database)
         var rebuilt = Assert.Single(await reporting.WaterfallAsync(
             owner.User.OrganizationId, now.AddMinutes(-1), now.AddMinutes(3)));
         Assert.Equal(0L, rebuilt.EndingArrCents);
+    }
+
+    [Fact]
+    public async Task Concurrent_duplicate_source_delivery_is_idempotent()
+    {
+        await using var factory = database.CreateFactory();
+        using var client = factory.CreateClient();
+        var owner = await ApiTestClient.RegisterAsync(
+            client, "Concurrent reporting", ApiTestClient.UniqueEmail("reporting-concurrent"));
+        var now = factory.Services.GetRequiredService<IVirtualClock>().Now;
+        var price = new RevenuePriceTerms(
+            Guid.NewGuid(), 1, "USD", "Flat", "Month", 1000, null, []);
+        var sourceEvent = new SubscriptionRevenueEvent(
+            Guid.NewGuid(), owner.User.OrganizationId, Guid.NewGuid(), "created", now,
+            null, new SubscriptionRevenueState("Active", price.PriceId, null, 1, price));
+
+        var deliveries = Enumerable.Range(0, 8).Select(async _ =>
+        {
+            await using var scope = factory.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<ISubscriptionRevenueEventWriter>()
+                .AppendAsync(sourceEvent);
+        });
+        await Task.WhenAll(deliveries);
+
+        await using var verifyScope = factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<ReportingDbContext>();
+        Assert.Equal(1, await db.SourceEvents.CountAsync(item =>
+            item.OrganizationId == owner.User.OrganizationId &&
+            item.SourceEventId == sourceEvent.SourceEventId));
+        Assert.Equal(1, await db.MrrMovements.CountAsync(item =>
+            item.OrganizationId == owner.User.OrganizationId &&
+            item.SourceEventId == sourceEvent.SourceEventId));
+        Assert.Equal(12_000L, Assert.Single(await verifyScope.ServiceProvider
+            .GetRequiredService<IReportingService>()
+            .CurrentAsync(owner.User.OrganizationId)).ArrCents);
     }
 
     [Fact]
@@ -200,6 +266,20 @@ public sealed class ReportingIntegrationTests(PostgreSqlFixture database)
             using var missingResponse = await client.SendAsync(missing);
             Assert.Equal(HttpStatusCode.NotFound, crossTenantResponse.StatusCode);
             Assert.Equal(missingResponse.StatusCode, crossTenantResponse.StatusCode);
+
+            using var otherRebuild = ApiTestClient.AuthorizedRequest(
+                HttpMethod.Post, "/api/reporting/rebuild", other.Token);
+            using var otherRebuildResponse = await client.SendAsync(otherRebuild);
+            Assert.Equal(HttpStatusCode.NoContent, otherRebuildResponse.StatusCode);
+            Assert.Equal(18_000L, Assert.Single(await SummaryAsync(client, owner.Token)).ArrCents);
+
+            using var otherWaterfall = ApiTestClient.AuthorizedRequest(
+                HttpMethod.Get,
+                $"/api/reporting/waterfall?from={Uri.EscapeDataString(sourceEvents[0].OccurredAt.AddDays(-1).ToString("O"))}&to={Uri.EscapeDataString(sourceEvents[1].OccurredAt.AddDays(1).ToString("O"))}",
+                other.Token);
+            using var otherWaterfallResponse = await client.SendAsync(otherWaterfall);
+            Assert.Equal(HttpStatusCode.OK, otherWaterfallResponse.StatusCode);
+            Assert.Empty(await otherWaterfallResponse.Content.ReadFromJsonAsync<WaterfallTotals[]>() ?? []);
 
             var writer = scope.ServiceProvider.GetRequiredService<ISubscriptionRevenueEventWriter>();
             var terms = new RevenuePriceTerms(price, 2, "USD", "Flat", "Month", 1500, null, []);
