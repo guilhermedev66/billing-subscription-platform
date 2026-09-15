@@ -354,7 +354,7 @@ function SubscriptionDetailContent({ subscription, products, prices }: Subscript
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
         <div className="flex items-center gap-3">
           <Repeat className="size-6 text-muted-foreground" aria-hidden="true" />
           <div className="flex flex-col gap-1">

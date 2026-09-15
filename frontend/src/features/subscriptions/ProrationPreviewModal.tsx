@@ -3,9 +3,11 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { billingStatusTokens } from '@/components/ui/StatusBadge'
 import { applyChange, previewChange } from '@/features/subscriptions/api'
 import type { ChangePreviewRequest, Subscription } from '@/features/subscriptions/types'
 import { ApiError } from '@/lib/api/client'
+import { cn } from '@/lib/cn'
 import { formatCents } from '@/lib/money'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
@@ -172,8 +174,8 @@ export function ProrationPreviewModal({
 
             <div className="flex flex-col gap-1.5 border-t border-border pt-3">
               {isCredit ? (
-                <div className="flex flex-col gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-950/40">
-                  <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                <div className={cn('flex flex-col gap-1 rounded-md border px-3 py-2', billingStatusTokens.success.badge)}>
+                  <span className="font-medium">
                     Account credit: {formatCents(Math.abs(proration.amountDueImmediatelyCents))}
                   </span>
                   <span className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
